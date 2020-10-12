@@ -5,8 +5,8 @@
 FILE file*;
 
 int main(int argc, char **argv){
-  os_mount("nombre_archivo");
-  
+  os_mount("/Users/felipe/Desktop/simdiskformat.bin");
+  os_exist("hola");
 
   return 0;
 }
