@@ -1,4 +1,4 @@
-
+FILE *file;
 
 typedef struct File {
   int numero;

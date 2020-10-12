@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include "os_API.h"
 
-FILE *file;
 
 void os_mount(char* diskname) {
   file = fopen(diskname, "rb");
