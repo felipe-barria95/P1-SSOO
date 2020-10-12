@@ -1,8 +1,8 @@
-struct File {
-  
 
-} typedef osFile;
 
+typedef struct File {
+  int numero;
+} osFile;
 
 void os_mount(char* diskname);
 

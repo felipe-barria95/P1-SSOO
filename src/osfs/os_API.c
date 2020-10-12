@@ -1,6 +1,8 @@
+#include <stdbool.h>
+#include <stdio.h>
+#include "os_API.h"
 
-
-void os_mount(char* diskname){
+void os_mount(char* diskname) {
   FILE = fopen(diskname, "rb");
 };
 
@@ -9,9 +11,15 @@ void os_bitmap(unsigned num, bool hex){
 };
 
 void os_exists(char* path){
-  unsigned char bytes[255];
-  int n = fread(bytes, 255, 1, fp);
-  printf(i%, n);
+  for (int i = 0; i < 64; i++){
+    unsigned char name[32];
+    fread(name, 32, 1, FILE);
+    fseek(FILE, 32, SEEK_CUR);
+    for (int j = 0; j < 32; j++){
+      printf("%c", name[j]);
+    }
+    printf("\n");
+  }
 };
 
 void os_ls(char* path){
