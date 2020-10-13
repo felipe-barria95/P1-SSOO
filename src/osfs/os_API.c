@@ -14,12 +14,12 @@ void os_bitmap(unsigned num, bool hex){
 
 int os_exists(char* path){
   for (int i = 0; i < 64; i++){
+    unsigned char name[29];
     unsigned char index[3];
     fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
     if (is_valid(index) > 0){
       unsigned char new_path[29];
-      unsigned char name[29];
-      fread(name, 29, 1, file);
       int last;
       last = strip_path(path, new_path); //1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
       int match = strcmp(new_path, name); //si es 0, hay match//
@@ -35,6 +35,10 @@ int os_exists(char* path){
           return os_exists(path);
         }
       }
+      if (strip_new_path(new_path) == 1){ //si se llama al path "/"//
+        fseek(file, 0, SEEK_SET);
+        return 1;
+      }
     }
   }
   fseek(file, 0, SEEK_SET);
@@ -42,7 +46,29 @@ int os_exists(char* path){
 };
 
 void os_ls(char* path){
-
+  for (int i = 0; i < 64; i++){
+    unsigned char name[29];
+    unsigned char index[3];
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0){
+      if (path[0] == NULL){
+        printf("%s\n", name); //falta comparar directorio inicial//
+      }
+      else {
+        unsigned char new_path[29];
+        int last;
+        last = strip_path(path, new_path);
+        int match = strcmp(new_path, name); //si es 0, hay match//
+        if (match == 0){
+          path = path + strip_new_path(new_path);
+          int disk_number = 2048*block_number(index);
+          fseek(file, disk_number, SEEK_SET);
+          return os_ls(path);
+        }
+      }
+    }
+  }
 };
 
 osFile* os_open(char* path, char mode){
@@ -84,6 +110,19 @@ void os_unload(char* orig, char* dest){
 void os_load(char* orig){
 
 };
+
+void print_ls(){
+  for (int i = 0; i < 64; i++){
+    unsigned char name[29];
+    unsigned char index[3];
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0){
+      printf("%s\n", name);
+    }
+  }
+  fseek(file, 0, SEEK_SET);
+}
 
 int is_valid (unsigned char* bits){
   return bits[0] >> 6;
