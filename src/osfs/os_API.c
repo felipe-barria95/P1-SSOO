@@ -26,7 +26,6 @@ void os_exists(char* path){
       }
       printf("\n");
     }
-    fseek(file, 32, SEEK_CUR);
   }
 };
 
