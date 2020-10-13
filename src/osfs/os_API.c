@@ -13,20 +13,15 @@ void os_bitmap(unsigned num, bool hex){
 };
 
 int os_exists(char* path){
-  unsigned char new_path[29];
-  int last; //1 si solo se referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
-  printf("Path original: %s\n", path);
-  last = strip_path(path, new_path);
-  printf("Path a buscar: %s\n", new_path);
-  printf("Is last?: %i\n", last);
   for (int i = 0; i < 64; i++){
     unsigned char index[3];
     fread(index, 3, 1, file);
     if (is_valid(index) > 0){
+      unsigned char new_path[29];
       unsigned char name[29];
       fread(name, 29, 1, file);
-      printf("Byte: %X %X %X\n", index[0], index[1], index[2]);
-      printf("Name: %s\n", name);
+      int last;
+      last = strip_path(path, new_path); //1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
       int match = strcmp(new_path, name); //si es 0, hay match//
       if (match == 0){
         if (last == 1){
@@ -34,18 +29,12 @@ int os_exists(char* path){
           return 1;
         }
         else{
-          printf("Hubo match.\n");
-          printf("Len char: %i\n", strip_new_path(new_path));
-          printf("New path 1: %s\n", path);
-          path = path + strip_new_path(new_path);
-          printf("New path 2: %s\n", path);
+          path = path + strip_new_path(new_path); //obtengo nuevo path, eliminando la carpeta que ya accedi//
           int disk_number = 2048*block_number(index);
-          printf("New disk number: %i\n", disk_number);
           fseek(file, disk_number, SEEK_SET);
           return os_exists(path);
         }
       }
-      printf("\n");
     }
   }
   fseek(file, 0, SEEK_SET);
