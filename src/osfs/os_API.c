@@ -37,7 +37,9 @@ int os_exists(char* path){
         }
         else{
           strip_new_path(path);
-          os_exists(path);
+
+          //fseek();//
+          //os_exists(path);//
         }
       }
     }
@@ -122,5 +124,5 @@ int strip_path(char* path, unsigned char new_path[]){
 }
 
 void strip_new_path(char* path){
-
+  
 }
