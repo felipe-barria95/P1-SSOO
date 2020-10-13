@@ -35,3 +35,7 @@ void os_load(char* orig);
 int is_valid (unsigned char* bits);
 
 int block_number(unsigned char *bits);
+
+int strip_path(char* path, unsigned char new_path[]);
+
+void strip_new_path(char* path);
