@@ -13,13 +13,16 @@ void os_bitmap(unsigned num, bool hex){
 
 void os_exists(char* path){
   for (int i = 0; i < 64; i++){
-    unsigned char name[32];
-    fread(name, 32, 1, file);
-    fseek(file, 32, SEEK_CUR);
-    for (int j = 0; j < 32; j++){
-      printf("%c", name[j]);
+    unsigned char bytes[32];
+    fread(bytes, 1, 32, file);
+    if (is_valid(bytes) == 1){
+      printf("%d\n", is_valid(bytes));
+      for (int j = 3; j < 32; j++){
+        printf("%c", bytes[j]);
+      }
+      printf("\n");
     }
-    printf("\n");
+    fseek(file, 32, SEEK_CUR);
   }
 };
 
@@ -66,3 +69,7 @@ void os_unload(char* orig, char* dest){
 void os_load(char* orig){
 
 };
+
+int is_valid (unsigned char* bits){
+  return bits[0] >> 6;
+}

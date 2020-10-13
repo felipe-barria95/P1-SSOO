@@ -31,3 +31,5 @@ int os_rmdir(char* path, bool recursive);
 void os_unload(char* orig, char* dest);
 
 void os_load(char* orig);
+
+int is_valid (unsigned char* bits);
