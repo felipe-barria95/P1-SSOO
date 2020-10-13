@@ -15,8 +15,9 @@ void os_bitmap(unsigned num, bool hex){
 int os_exists(char* path){
   unsigned char new_path[29];
   int last; //1 si solo se referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
+  printf("Path original: %s\n", path);
   last = strip_path(path, new_path);
-  printf("New Path: %s\n", new_path);
+  printf("Path a buscar: %s\n", new_path);
   printf("Is last?: %i\n", last);
   for (int i = 0; i < 64; i++){
     unsigned char index[3];
@@ -24,26 +25,30 @@ int os_exists(char* path){
     if (is_valid(index) > 0){
       unsigned char name[29];
       fread(name, 29, 1, file);
-      printf("Byte: %X\n", index[0]);
-      printf("Number: %d\n", block_number(index));
-      printf("Valid: %d\n", is_valid(index));
+      printf("Byte: %X %X %X\n", index[0], index[1], index[2]);
       printf("Name: %s\n", name);
-      int match = strcmp(new_path, name);
-      printf("Hay match?: %i\n", match);
-      printf("\n");
+      int match = strcmp(new_path, name); //si es 0, hay match//
       if (match == 0){
         if (last == 1){
+          fseek(file, 0, SEEK_SET);
           return 1;
         }
         else{
-          strip_new_path(path);
-
-          //fseek();//
-          //os_exists(path);//
+          printf("Hubo match.\n");
+          printf("Len char: %i\n", strip_new_path(new_path));
+          printf("New path 1: %s\n", path);
+          path = path + strip_new_path(new_path);
+          printf("New path 2: %s\n", path);
+          int disk_number = 2048*block_number(index);
+          printf("New disk number: %i\n", disk_number);
+          fseek(file, disk_number, SEEK_SET);
+          return os_exists(path);
         }
       }
+      printf("\n");
     }
   }
+  fseek(file, 0, SEEK_SET);
   return 0;
 };
 
@@ -95,12 +100,11 @@ int is_valid (unsigned char* bits){
   return bits[0] >> 6;
 }
 
-int block_number(unsigned char *bits)
-{
-  return (bits[0] & 0x3F << 16) | (bits[1] << 8) | bits[2];
+int block_number(unsigned char *bits){
+  return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
 }
 
-int strip_path(char* path, unsigned char new_path[]){
+int strip_path(char* path, unsigned char new_path[29]){
   const char slash = '/';
   int h = 0;
   int j = 0;
@@ -114,6 +118,10 @@ int strip_path(char* path, unsigned char new_path[]){
         h++;
       }
     }
+    else{
+      new_path[h] = NULL;
+      h++;
+    }
   }
   if (j == 2){
     return 0;
@@ -123,6 +131,10 @@ int strip_path(char* path, unsigned char new_path[]){
   }
 }
 
-void strip_new_path(char* path){
-  
+int strip_new_path(unsigned char new_path[29]){
+  int i = 0;
+  while (new_path[i] != NULL){
+    i++;
+  }
+  return i+1;
 }

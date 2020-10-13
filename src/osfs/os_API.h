@@ -8,7 +8,7 @@ void os_mount(char* diskname);
 
 void os_bitmap(unsigned num, bool hex);
 
-void os_exists(char* path);
+int os_exists(char* path);
 
 void os_ls(char* path);
 
@@ -36,6 +36,6 @@ int is_valid (unsigned char* bits);
 
 int block_number(unsigned char *bits);
 
-int strip_path(char* path, unsigned char new_path[]);
+int strip_path(char* path, unsigned char new_path[29]);
 
-void strip_new_path(char* path);
+int strip_new_path(unsigned char new_path[29]);

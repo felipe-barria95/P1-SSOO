@@ -4,6 +4,6 @@
 
 int main(int argc, char **argv){
   os_mount("/Users/felipe/Documents/GitHub/P1-SSOO/disk_files/simdiskfilled.bin");
-  os_exists("/folder/usr/Felipe/example/no_leer.txt");
+  os_exists("/folder/god/shrek.mp4");
   return 0;
 }
