@@ -33,3 +33,5 @@ void os_unload(char* orig, char* dest);
 void os_load(char* orig);
 
 int is_valid (unsigned char* bits);
+
+int block_number(unsigned char *bits);
