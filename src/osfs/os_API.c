@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "os_API.h"
+#include <stdlib.h>
 
 
 void os_mount(char* diskname) {
@@ -9,7 +10,29 @@ void os_mount(char* diskname) {
 };
 
 void os_bitmap(unsigned num, bool hex){
-
+  unsigned char *buffer;
+  buffer = calloc(2048, sizeof(char));
+  if (num == 0){
+    printf("no entro\n");
+  }
+  else if (num > 0 && num < 65){
+    int number = 2048*num;
+    fseek(file, number, SEEK_SET);
+    fread(buffer, 2048, 1, file);
+    if(hex == true){
+      for (int i = 0; i < 2048; i++){
+        printf("%02X ", buffer[i]);
+      }
+    }
+    else{
+      for (int i = 0; i < 2048; i++){
+        print_bits(buffer[i]);
+        printf(" ");
+      }
+    }
+    printf("\n");
+  }
+  free(buffer);
 };
 
 int os_exists(char* path){
@@ -21,7 +44,7 @@ int os_exists(char* path){
     if (is_valid(index) > 0){
       unsigned char new_path[29];
       int last;
-      last = strip_path(path, new_path); //1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
+      last = strip_path(path, new_path); //retorna 1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
       int match = strcmp(new_path, name); //si es 0, hay match//
       if (match == 0){
         if (last == 1){
@@ -47,12 +70,13 @@ int os_exists(char* path){
 
 void os_ls(char* path){
   for (int i = 0; i < 64; i++){
-    unsigned char name[29];
     unsigned char index[3];
+    unsigned char name[29];
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
-    if (is_valid(index) > 0){
-      if (path[0] == NULL){
+
+    if (is_valid(index) > 0){ //si llegamos al directorio destino o si estamos en directorio raiz//
+      if (path[0] == NULL || strcmp(path, "/") == 0){
         printf("%s\n", name); //falta comparar directorio inicial//
       }
       else {
@@ -69,6 +93,7 @@ void os_ls(char* path){
       }
     }
   }
+  fseek(file, 0, SEEK_SET);
 };
 
 osFile* os_open(char* path, char mode){
@@ -165,4 +190,11 @@ int strip_new_path(unsigned char new_path[29]){
     i++;
   }
   return i+1;
+}
+
+void print_bits(unsigned char val)
+{
+  for (int i = 7; 0 <= i; i--) {
+    printf("%c", (val & (1 << i)) ? '1' : '0');
+  }
 }
