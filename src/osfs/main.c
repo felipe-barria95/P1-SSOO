@@ -6,6 +6,6 @@ int main(int argc, char **argv){
   os_mount("/Users/felipe/Documents/GitHub/P1-SSOO/disk_files/simdiskfilled.bin");
   printf("%i\n", os_exists("/folder"));
   os_ls("/");
-  os_bitmap(2, true);
+  os_bitmap(0, true);
   return 0;
 }

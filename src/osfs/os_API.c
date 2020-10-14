@@ -9,11 +9,32 @@ void os_mount(char* diskname) {
   file = fopen(diskname, "rb");
 };
 
-void os_bitmap(unsigned num, bool hex){
+void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
   unsigned char *buffer;
   buffer = calloc(2048, sizeof(char));
   if (num == 0){
-    printf("no entro\n");
+    int count = 0;
+    for (int j = 1; j < 65; j++){
+      int number = 2048*j;
+      fseek(file, number, SEEK_SET);
+      fread(buffer, 2048, 1, file);
+      printf("Bloque %i\n", j);
+      if(hex == true){
+        for (int i = 0; i < 2048; i++){
+          count += bits_in_char(buffer[i]);
+          printf("%02X ", buffer[i]);
+        }
+      }
+      else{
+        for (int i = 0; i < 2048; i++){
+          count += bits_in_char(buffer[i]);
+          print_bits(buffer[i]);
+          printf(" ");
+        }
+      }
+      printf("\n");
+    }
+    printf("Contador: Bloques usados: %i. Bloques libres: %i.\n", count, 1048576-count);
   }
   else if (num > 0 && num < 65){
     int number = 2048*num;
@@ -194,7 +215,17 @@ int strip_new_path(unsigned char new_path[29]){
 
 void print_bits(unsigned char val)
 {
-  for (int i = 7; 0 <= i; i--) {
+  for (int i = 7; i >= 0; i--){
     printf("%c", (val & (1 << i)) ? '1' : '0');
   }
 }
+
+int bits_in_char(unsigned char val)
+{
+  int count = 0;
+  for (int i = 7; i >= 0; --i){
+    int bit = ((val & (1 << i)) >> i);
+    count += bit;
+  }
+  return count;
+};

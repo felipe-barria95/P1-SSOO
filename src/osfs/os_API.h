@@ -43,3 +43,5 @@ int strip_path(char* path, unsigned char new_path[29]);
 int strip_new_path(unsigned char new_path[29]);
 
 void print_bits(unsigned char val);
+
+int bits_in_char(unsigned char val);
