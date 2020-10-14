@@ -114,10 +114,20 @@ void os_ls(char* path){
       }
     }
   }
+  printf("==================================\n");
   fseek(file, 0, SEEK_SET);
 };
 
 osFile* os_open(char* path, char mode){
+  if (mode == 'r' && os_exists(path)){
+    osFile *OsFile = malloc(sizeof(osFile));
+    OsFile->mode = mode;
+    //falta poner
+
+  }
+
+  
+
 
 };
 

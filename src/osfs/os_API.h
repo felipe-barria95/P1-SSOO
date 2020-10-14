@@ -1,7 +1,12 @@
+
 FILE *file;
 
 typedef struct File {
-  int numero;
+  int numero; //
+  char mode; // Para saber si es 'w' o 'r'
+  char* nombre; // Corresponde al nombre del archivo, qyuizas podemnos agrgar una extensión
+  int posición; // este atributo nos puede servir para saber en la posición del archivo que vamos
+  
 } osFile;
 
 void os_mount(char* diskname);
