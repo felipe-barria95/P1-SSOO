@@ -5,7 +5,8 @@ typedef struct File {
   int numero; //
   char mode; // Para saber si es 'w' o 'r'
   char* nombre; // Corresponde al nombre del archivo, qyuizas podemnos agrgar una extensión
-  int posición; // este atributo nos puede servir para saber en la posición del archivo que vamos
+  int posicion; // este atributo nos puede servir para saber en la posición del archivo que vamos
+  FILE* file; // Con esto podemos cargar el archivo 
   
 } osFile;
 

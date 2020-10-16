@@ -7,6 +7,8 @@ int main(int argc, char **argv){
   printf("%i\n", os_exists("/folder"));
   os_ls("/");
   os_ls("/folder/god");
-  os_bitmap(1, true);
+  // os_bitmap(1, true);
+  printf("EXISTE?: %i\n", os_exists("/IMPORTANT.txt"));
+  os_open("/IMPORTANT.txt", 'r');
   return 0;
 }

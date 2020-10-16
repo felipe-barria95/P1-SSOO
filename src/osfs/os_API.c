@@ -7,7 +7,7 @@
 
 void os_mount(char* diskname) {
   file = fopen(diskname, "rb");
-};
+}
 
 void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
   unsigned char *buffer;
@@ -54,7 +54,7 @@ void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
     printf("\n");
   }
   free(buffer);
-};
+}
 
 int os_exists(char* path){
   for (int i = 0; i < 64; i++){
@@ -87,7 +87,7 @@ int os_exists(char* path){
   }
   fseek(file, 0, SEEK_SET);
   return 0;
-};
+}
 
 void os_ls(char* path){
   for (int i = 0; i < 64; i++){
@@ -116,56 +116,84 @@ void os_ls(char* path){
   }
   printf("==================================\n");
   fseek(file, 0, SEEK_SET);
-};
+}
 
 osFile* os_open(char* path, char mode){
-  if (mode == 'r' && os_exists(path)){
-    osFile *OsFile = malloc(sizeof(osFile));
-    OsFile->mode = mode;
-    //falta poner
+  // RETORNAUN PUNTERO DEL ARCHIVO O NULL SI ES QUE HUBO UN ERROR
 
+  // definimos la variable
+  osFile* OsFile;
+  OsFile = malloc(sizeof(osFile));
+  OsFile->mode = mode;
+  OsFile->posicion = 0;
+  
+  printf("existe? %i\n", os_exists(path));
+  // Si es 'r' y el archivo existe
+  if (mode == 'r' && os_exists(path)){
+    OsFile->file = fopen(path, 'r');
+    return OsFile;
   }
 
-  
+  // Si es 'w' y el archivo no existe
+  else if (mode == 'w'&& (!os_exists(path))){
+    OsFile->file = fopen(path, 'w');
+    return OsFile;
+  }
 
-
-};
+  // Si no es ninguo de los dos o el achivo existo o no exite
+  else{
+    printf("ERROR No se pudo habrir el archivo\n");
+    free(OsFile);
+    return NULL;
+  }
+}
 
 int os_read(osFile* file_desc, void* buffer, int nbytes){
+  // Esta funcion deviera funcionar solo si el archivo está abierto y existe el buffer
+  // retorna la cantidad de byts leidos
+  if (file_desc->mode == 'r')
+  {
+    int avance = fread(buffer, nbytes, 1, file_desc->file);
+    file_desc->posicion += avance;
+    return avance;
+  }
+  else{
+    printf("ERROR, este archivo no está en modo lectura\n");
+  }
 
-};
+}
 
 int os_write(osFile* file_desc, void* buffer, int nbytes){
 
-};
+}
 
 void os_close(osFile* file_desc){
 
-};
+}
 
 void os_rm(char* path){
 
-};
+}
 
 int os_hardlink(char* orig, char* dest){
 
-};
+}
 
 int os_mkdir(char* path){
 
-};
+}
 
 int os_rmdir(char* path, bool recursive){
 
-};
+}
 
 void os_unload(char* orig, char* dest){
 
-};
+}
 
 void os_load(char* orig){
 
-};
+}
 
 void print_ls(){
   for (int i = 0; i < 64; i++){
@@ -238,4 +266,4 @@ int bits_in_char(unsigned char val)
     count += bit;
   }
   return count;
-};
+}
