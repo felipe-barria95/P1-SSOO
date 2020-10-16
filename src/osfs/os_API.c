@@ -34,6 +34,7 @@ void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
       }
       printf("\n");
     }
+    fseek(file, 0, SEEK_SET);
     printf("Contador: Bloques usados: %i. Bloques libres: %i.\n", count, 1048576-count);
   }
   else if (num > 0 && num < 65){
@@ -66,7 +67,11 @@ int os_exists(char* path){
       unsigned char new_path[29];
       int last;
       last = strip_path(path, new_path); //retorna 1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
+      printf("New char: %s\n", new_path);
+      printf("Char search: %s\n", name);
       int match = strcmp(new_path, name); //si es 0, hay match//
+      printf("match: %i\n", match);
+      printf("last: %i\n", last); 
       if (match == 0){
         if (last == 1){
           fseek(file, 0, SEEK_SET);
@@ -126,7 +131,7 @@ osFile* os_open(char* path, char mode){
   OsFile = malloc(sizeof(osFile));
   OsFile->mode = mode;
   OsFile->posicion = 0;
-  
+
   printf("existe? %i\n", os_exists(path));
   // Si es 'r' y el archivo existe
   if (mode == 'r' && os_exists(path)){
@@ -171,7 +176,7 @@ void os_close(osFile* file_desc){
 
 }
 
-void os_rm(char* path){
+void os_rm(char* path){        
 
 }
 
@@ -180,7 +185,49 @@ int os_hardlink(char* orig, char* dest){
 }
 
 int os_mkdir(char* path){
+  for (int i = 0; i < 64; i++){
+    unsigned char index[3];
+    unsigned char name[29];
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
 
+    if (is_valid(index) > 0){ //si llegamos al directorio destino o si estamos en directorio raiz//
+      unsigned char new_path[29];
+      int last;
+      last = strip_path(path, new_path);
+      if (last == 1){
+        fseek(file, -32*(i+1), SEEK_SET); //devolvemos hacia atras todo lo que recorrio inicialmente//
+        unsigned char index_2[3];
+        unsigned char name_2[29];
+        for (int j = 0; j < 64; j++){
+          fread(index_2, 3, 1, file);
+          fread(name_2, 29, 1, file);
+          if (is_valid(index_2) == 0){
+            fseek(file, -32, SEEK_SET);
+            int asigned_block = update_bitmap();
+            //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
+            fwrite(index_2, 3, 1, file);
+            fwrite(new_path, 29, 1, file);
+            fseek(file, 0, SEEK_SET);
+            break;
+          }
+        }
+        break;
+      }
+      else{
+        unsigned char new_path[29];
+        int last;
+        last = strip_path(path, new_path);
+        int match = strcmp(new_path, name); //si es 0, hay match//
+        if (match == 0){
+          path = path + strip_new_path(new_path);
+          int disk_number = 2048*block_number(index);
+          fseek(file, disk_number, SEEK_SET);
+          return os_mkdir(path);
+        }
+      }
+    }
+  }
 }
 
 int os_rmdir(char* path, bool recursive){
@@ -267,3 +314,5 @@ int bits_in_char(unsigned char val)
   }
   return count;
 }
+
+int update_bitmap(){}

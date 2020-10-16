@@ -6,8 +6,8 @@ typedef struct File {
   char mode; // Para saber si es 'w' o 'r'
   char* nombre; // Corresponde al nombre del archivo, qyuizas podemnos agrgar una extensión
   int posicion; // este atributo nos puede servir para saber en la posición del archivo que vamos
-  FILE* file; // Con esto podemos cargar el archivo 
-  
+  FILE* file; // Con esto podemos cargar el archivo
+
 } osFile;
 
 void os_mount(char* diskname);
@@ -51,3 +51,5 @@ int strip_new_path(unsigned char new_path[29]);
 void print_bits(unsigned char val);
 
 int bits_in_char(unsigned char val);
+
+int update_bitmap();
