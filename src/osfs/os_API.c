@@ -67,11 +67,11 @@ int os_exists(char* path){
       unsigned char new_path[29];
       int last;
       last = strip_path(path, new_path); //retorna 1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
-      printf("New char: %s\n", new_path);
-      printf("Char search: %s\n", name);
+      printf("New char: %s\n", path);
+      printf("Char search: %s\n", new_path);
       int match = strcmp(new_path, name); //si es 0, hay match//
       printf("match: %i\n", match);
-      printf("last: %i\n", last); 
+      printf("last: %i\n", last);
       if (match == 0){
         if (last == 1){
           fseek(file, 0, SEEK_SET);
@@ -267,9 +267,11 @@ int strip_path(char* path, unsigned char new_path[29]){
   const char slash = '/';
   int h = 0;
   int j = 0;
+  int count = 0;
   for (int k = 0; k < 29; k++){
     if (j < 2){
       if (path[k] == slash){
+        printf("path actual %i: %c\n",path[k], k);
         j++;
       }
       else{
@@ -282,10 +284,16 @@ int strip_path(char* path, unsigned char new_path[29]){
       h++;
     }
   }
-  if (j == 2){
+  for (int k = 0; k < 29; k++){
+    if (new_path[k] == slash){
+      count++;
+    }
+  }
+  printf("Count: %i\n", j);
+  if (count > 0){
     return 0;
   }
-  else if (j == 1){
+  else if (count == 0){
     return 1;
   }
 }
