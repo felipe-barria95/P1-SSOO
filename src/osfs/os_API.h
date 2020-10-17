@@ -5,9 +5,12 @@ typedef struct File {
   int numero; //
   char mode; // Para saber si es 'w' o 'r'
   char* nombre; // Corresponde al nombre del archivo, qyuizas podemnos agrgar una extensión
-  int posicion; // este atributo nos puede servir para saber en la posición del archivo que vamos
-  FILE* file; // Con esto podemos cargar el archivo
-
+  unsigned int pos_direct; // posición del bloque directorio
+  unsigned int pos_indice; // posición del bloque indice
+  int size; //obtener del bloque indice//
+  int n_hardlinks;
+  int tamaño; // tamaño en bytes del archivo
+  unsigned int direccionamiento[504];//
 } osFile;
 
 void os_mount(char* diskname);
@@ -53,3 +56,5 @@ void print_bits(unsigned char val);
 int bits_in_char(unsigned char val);
 
 int update_bitmap();
+
+void int_to_bytes(unsigned char index[3], int block_number);
