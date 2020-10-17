@@ -62,28 +62,29 @@ int os_exists(char* path){
   unsigned char index[3];
   unsigned char new_path[29];
   path = path + 1;
-  strip_path(path, new_path); //retorna 1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
-  printf("path: %s\n", path);
+  if (path[0] == NULL){
+    return 1;
+  }
   for (int i = 0; i < 64; i++){
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0){
-      int match = strcmp(new_path, name); //si es 0, hay match//
-      if (match == 0){
-        if (strchr(path, slash) == NULL){
-          fseek(file, 0, SEEK_SET);
-          return 1;
-        }
-        else{
+      if (strchr(path, slash) != NULL){
+        strip_path(path, new_path, 1);
+        int match = strcmp(new_path, name);
+        if (match == 0){
           path = path + strip_new_path(new_path); //obtengo nuevo path, eliminando la carpeta que ya accedi//
           int disk_number = 2048*block_number(index);
           fseek(file, disk_number, SEEK_SET);
           return os_exists(path);
         }
       }
-      if (strip_new_path(new_path) == 1){ //si se llama al path "/"//
-        fseek(file, 0, SEEK_SET);
-        return 1;
+      else if (strchr(path, slash) == NULL){
+        int match = strcmp(path, name);
+        if (match == 0){
+          fseek(file, 0, SEEK_SET);
+          return 1;
+        }
       }
     }
   }
@@ -99,17 +100,16 @@ void os_ls(char* path){
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0){ //si llegamos al directorio destino o si estamos en directorio raiz//
-      if (strchr(path, slash) == NULL){
+      if (path[0] == NULL || path == "/"){
         printf("%s\n", name); //falta comparar directorio inicial//
       }
       else {
         unsigned char new_path[29];
-        path = path + 1;
-        strip_path(path, new_path);
-        //FALTA LAST//
+        strip_path(path, new_path, 2);
         int match = strcmp(new_path, name); //si es 0, hay match//
+        //FALTA LAST//
         if (match == 0){
-          path = path + strip_new_path(new_path);
+          path = path + strip_new_path(new_path)+1;
           int disk_number = 2048*block_number(index);
           fseek(file, disk_number, SEEK_SET);
           return os_ls(path);
@@ -184,7 +184,7 @@ int os_hardlink(char* orig, char* dest){
 
 int os_mkdir(char* path){
   unsigned char new_path[29];
-  strip_path(path, new_path);
+  strip_path(path, new_path, 1);
   for (int i = 0; i < 64; i++){
     unsigned char index[3];
     unsigned char name[29];
@@ -213,7 +213,7 @@ int os_mkdir(char* path){
       }
       else{
         unsigned char new_path[29];
-        strip_path(path, new_path);
+        strip_path(path, new_path, 1);
         int match = strcmp(new_path, name); //si es 0, hay match//
         if (match == 0){
           path = path + strip_new_path(new_path);
@@ -260,12 +260,12 @@ int block_number(unsigned char *bits){
   return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
 }
 
-void strip_path(char* path, unsigned char new_path[29]){
+void strip_path(char* path, unsigned char new_path[29], int i){
   const char slash = '/';
   int j = 0;
   int h = 0;
   for (int k = 0; k < 29; k++){
-    if (j == 0){
+    if (j < i){
       if (path[k] == slash){
         j++;
       }

@@ -44,7 +44,7 @@ int is_valid (unsigned char* bits);
 
 int block_number(unsigned char *bits);
 
-void strip_path(char* path, unsigned char new_path[29]);
+void strip_path(char* path, unsigned char new_path[29], int i);
 
 int strip_new_path(unsigned char new_path[29]);
 

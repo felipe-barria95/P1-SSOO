@@ -8,7 +8,7 @@ int main(int argc, char **argv){
   os_ls("/");
   ///os_bitmap(1, true);
   printf("EXISTE?: %i\n", os_exists("/esto no fue mi idea.rar"));
-  printf("EXISTE?: %i\n", os_exists("/memes/generic (30gredgbretfdas).png"));
+  printf("EXISTE?: %i\n", os_exists("/folder/god/shrek.mp4ffff"));
   //os_open("/IMPORTANT.txt", 'r');//
   return 0;
 }
