@@ -4,7 +4,6 @@
 #include "os_API.h"
 #include <stdlib.h>
 
-
 void os_mount(char* diskname) {
   file = fopen(diskname, "rb");
 }
@@ -58,22 +57,20 @@ void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
 }
 
 int os_exists(char* path){
+  const char slash = '/';
+  unsigned char name[29];
+  unsigned char index[3];
+  unsigned char new_path[29];
+  path = path + 1;
+  strip_path(path, new_path); //retorna 1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
+  printf("path: %s\n", path);
   for (int i = 0; i < 64; i++){
-    unsigned char name[29];
-    unsigned char index[3];
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0){
-      unsigned char new_path[29];
-      int last;
-      last = strip_path(path, new_path); //retorna 1 si hay SOLO UNA referencia a un archivo/carpeta en el directorio path, 0 en otro caso//
-      printf("New char: %s\n", path);
-      printf("Char search: %s\n", new_path);
       int match = strcmp(new_path, name); //si es 0, hay match//
-      printf("match: %i\n", match);
-      printf("last: %i\n", last);
       if (match == 0){
-        if (last == 1){
+        if (strchr(path, slash) == NULL){
           fseek(file, 0, SEEK_SET);
           return 1;
         }
@@ -95,20 +92,21 @@ int os_exists(char* path){
 }
 
 void os_ls(char* path){
+  const char slash = '/';
+  unsigned char index[3];
+  unsigned char name[29];
   for (int i = 0; i < 64; i++){
-    unsigned char index[3];
-    unsigned char name[29];
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
-
     if (is_valid(index) > 0){ //si llegamos al directorio destino o si estamos en directorio raiz//
-      if (path[0] == NULL || strcmp(path, "/") == 0){
+      if (strchr(path, slash) == NULL){
         printf("%s\n", name); //falta comparar directorio inicial//
       }
       else {
         unsigned char new_path[29];
-        int last;
-        last = strip_path(path, new_path);
+        path = path + 1;
+        strip_path(path, new_path);
+        //FALTA LAST//
         int match = strcmp(new_path, name); //si es 0, hay match//
         if (match == 0){
           path = path + strip_new_path(new_path);
@@ -185,6 +183,8 @@ int os_hardlink(char* orig, char* dest){
 }
 
 int os_mkdir(char* path){
+  unsigned char new_path[29];
+  strip_path(path, new_path);
   for (int i = 0; i < 64; i++){
     unsigned char index[3];
     unsigned char name[29];
@@ -192,10 +192,7 @@ int os_mkdir(char* path){
     fread(name, 29, 1, file);
 
     if (is_valid(index) > 0){ //si llegamos al directorio destino o si estamos en directorio raiz//
-      unsigned char new_path[29];
-      int last;
-      last = strip_path(path, new_path);
-      if (last == 1){
+      if (true){
         fseek(file, -32*(i+1), SEEK_SET); //devolvemos hacia atras todo lo que recorrio inicialmente//
         unsigned char index_2[3];
         unsigned char name_2[29];
@@ -216,8 +213,7 @@ int os_mkdir(char* path){
       }
       else{
         unsigned char new_path[29];
-        int last;
-        last = strip_path(path, new_path);
+        strip_path(path, new_path);
         int match = strcmp(new_path, name); //si es 0, hay match//
         if (match == 0){
           path = path + strip_new_path(new_path);
@@ -229,6 +225,7 @@ int os_mkdir(char* path){
     }
   }
 }
+
 
 int os_rmdir(char* path, bool recursive){
 
@@ -263,15 +260,13 @@ int block_number(unsigned char *bits){
   return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
 }
 
-int strip_path(char* path, unsigned char new_path[29]){
+void strip_path(char* path, unsigned char new_path[29]){
   const char slash = '/';
-  int h = 0;
   int j = 0;
-  int count = 0;
+  int h = 0;
   for (int k = 0; k < 29; k++){
-    if (j < 2){
+    if (j == 0){
       if (path[k] == slash){
-        printf("path actual %i: %c\n",path[k], k);
         j++;
       }
       else{
@@ -284,18 +279,6 @@ int strip_path(char* path, unsigned char new_path[29]){
       h++;
     }
   }
-  for (int k = 0; k < 29; k++){
-    if (new_path[k] == slash){
-      count++;
-    }
-  }
-  printf("Count: %i\n", j);
-  if (count > 0){
-    return 0;
-  }
-  else if (count == 0){
-    return 1;
-  }
 }
 
 int strip_new_path(unsigned char new_path[29]){
@@ -303,7 +286,7 @@ int strip_new_path(unsigned char new_path[29]){
   while (new_path[i] != NULL){
     i++;
   }
-  return i+1;
+  return i;
 }
 
 void print_bits(unsigned char val)
