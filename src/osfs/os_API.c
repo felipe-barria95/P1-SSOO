@@ -72,6 +72,8 @@ void os_bitmap(unsigned num, bool hex)
 
 int os_exists(char* path)
 {
+  int posicion = ftell(file);
+  printf("##  ##### %i\n", posicion);
   const char slash = '/';
   unsigned char name[29];
   unsigned char index[3];
@@ -83,6 +85,7 @@ int os_exists(char* path)
   }
   for (int i = 0; i < 64; i++)
   {
+    printf("##\n");
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0)
@@ -256,12 +259,6 @@ osFile* os_open(char* path, char mode)
     printf("## bloques  que no caben en el indice principal: %f\n", resto);
     OsFile->n_indices_adcicionales = resto;
 
-    // aqui calculamos los bytes que quedan en el bloque de data:
-
-    //vamos al primer puntero a bloque de direccionamiento siemple
-    //unsigned char dir_simp[4];
-    //fread(dir_simp, 4, 1, file);
-
     fseek(file, 0, SEEK_SET);
     return OsFile;
   }
@@ -269,7 +266,21 @@ osFile* os_open(char* path, char mode)
   // Si es 'w' y el archivo no existe
   else if (mode == 'w')
   {
-    get_folder_path(path);
+    fseek(file, 0, SEEK_SET);
+    unsigned char folder_path[29];
+    printf("## logramos copiar el path?: %s\n", get_folder_path(path, folder_path));
+
+    //memcpy(new_path, get_folder_path(path), 29);
+    printf("## logramos copiar el path?: %s\n", folder_path);
+    fseek(file, 0, SEEK_SET);
+    printf("###\n");
+    os_exists(folder_path);
+    //printf("## existe la carpeta? %s\n", os_exists(folder_path));
+    if (os_exists(folder_path))
+    {
+      printf("## entramos, quiere decir que si existe la carpeta\n");
+    }
+
     //fseek(file, 0, SEEK_SET);
     // tengo que seguir el path hasta la ubicación del archivo
     printf("## completamos\n");
@@ -511,9 +522,10 @@ void strip_path(char* path, unsigned char new_path[29], int i)
   }
 }
 
-void get_folder_path(char* path)
+unsigned char* get_folder_path(char* path, unsigned char new_path[29])
 {
-  unsigned char new_path[29];
+  //unsigned char new_path[29];
+  new_path[0] = '/';
   // contar cantidad de "/"s
   int n = 0;
   int cantidad = 0;
@@ -530,19 +542,22 @@ void get_folder_path(char* path)
   // ahora dejamos el path no n-1 slash
   const char slash = '/';
   int j = 0;
-  int h = 0;
+  int h = 1;
   printf("## path: %s\n", path);
   for (int k = 0; k < 29; k++)
   {
-    if (j < cantidad - 1)
+    if (j < cantidad)
     {
+      printf("## caracter del path: %c\n", path[k]);
       if (path[k] == slash)
       {
+        printf("## J: %i\n", j);
         j++;
         printf("un slaaaaash\n");
       }
       else
       {
+
         new_path[h] = path[k];
         h++;
       }
