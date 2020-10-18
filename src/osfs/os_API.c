@@ -401,6 +401,8 @@ int os_hardlink(char* orig, char* dest)
 {
 }
 
+
+
 int os_mkdir(char* path)
 {
   int count = 0;
@@ -568,33 +570,86 @@ int is_valid(unsigned char* bits)
   return bits[0] >> 6;
 }
 
+unsigned char* get_folder_path(char* path, unsigned char new_path[29])
+{
+  //unsigned char new_path[29];
+  new_path[0] = '/';
+  // contar cantidad de "/"s
+  int n = 0;
+  int cantidad = 0;
+  while (path[n] != NULL)
+  {
+    if (path[n] == '/')
+    {
+      cantidad++;
+    }
+    n++;
+  }
+  printf("## cantidad de slashs: %i\n", cantidad);
+
+  // ahora dejamos el path no n-1 slash
+  const char slash = '/';
+  int j = 0;
+  int h = 1;
+  printf("## path: %s\n", path);
+  for (int k = 0; k < 29; k++)
+  {
+    if (j < cantidad)
+    {
+      printf("## caracter del path: %c\n", path[k]);
+      if (path[k] == slash)
+      {
+        printf("## J: %i\n", j);
+        j++;
+        printf("un slaaaaash\n");
+      }
+      else
+      {
+
+        new_path[h] = path[k];
+        h++;
+      }
+    }
+    else
+    {
+      new_path[h] = NULL;
+      h++;
+    }
+  }
+  printf("## nuevo path: %s\n", new_path);
+  return new_path;
+}
+
 int block_number(unsigned char* bits)
 {
   return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
 }
 
-void strip_path(char* path, unsigned char new_path[29], int i)
-int j = 0;
-for (int k = 0; k < 29; k++)
-{
-  if (j < i)
+void strip_path(char* path, unsigned char new_path[29], int i) {
+
+  const char slash = '/';
+  int h = 0;
+  int j = 0;
+  for (int k = 0; k < 29; k++)
   {
-    if (path[k] == slash)
+    if (j < i)
     {
-      j++;
+      if (path[k] == slash)
+      {
+        j++;
+      }
+      else
+      {
+        new_path[h] = path[k];
+        h++;
+      }
     }
     else
     {
-      new_path[h] = path[k];
+      new_path[h] = NULL;
       h++;
     }
   }
-  else
-  {
-    new_path[h] = NULL;
-    h++;
-  }
-}
 }
 
 int strip_new_path(unsigned char new_path[29])
@@ -636,129 +691,166 @@ int update_bitmap()
     int number = 2048 * j;
     fseek(file, number, SEEK_SET);
     fread(buffer, 2048, 1, file);
-    unsigned char update_byte(unsigned char byte, int pos_zero)
-    {
-      unsigned char byte_2 = "\0";
-      if (pos_zero == 0)
-      {
-        byte_2 = byte | 0x80;
+    for (int i = 0; i < 2048; i++) {
+      if (buffer[i] != 0xFF) {
+        unsigned char buffer_update[0];
+        int pos_zero = int_from_byte(buffer[i]);
+        buffer_update[0] = update_byte(buffer[i], pos_zero);
+        fseek(file, number + i, SEEK_SET);
+        fwrite(buffer_update, 1, 1, file);
+        count = count + pos_zero;
+        return count;
       }
-      else if (pos_zero == 1)
-      {
-        byte_2 = byte | 0x40;
-      }
-      else if (pos_zero == 2)
-      {
-        byte_2 = byte | 0x20;
-      }
-      else if (pos_zero == 3)
-      {
-        byte_2 = byte | 0x10;
-      }
-      else if (pos_zero == 4)
-      {
-        byte_2 = byte | 0x08;
-      }
-      else if (pos_zero == 5)
-      {
-        byte_2 = byte | 0x04;
-      }
-      else if (pos_zero == 6)
-      {
-        byte_2 = byte | 0x02;
-      }
-      else
-      {
-        byte_2 = byte | 0x01;
-      }
-      return byte_2;
+      count = count + 8;
     }
+  }
+  free(buffer);
+}
 
-    void update_remove_bitmap(int index) {
-      unsigned char buffer[0];
-      int blocks_per_blocks = 16384;
-      int result = index / blocks_per_blocks;
-      int resto = index % blocks_per_blocks;
-      int resto_2 = resto % 8;
-      resto = resto / 8;
-      printf("resultado :%i\n", resto_2);
-      int disk_number_2 = (result + 1) * 2048 + resto;
-      printf("disk numerb 2: %i\n", disk_number_2);
-      fseek(file, disk_number_2, SEEK_SET);
-      fread(buffer, 1, 1, file);
-      unsigned char new_buffer[0];
-      new_buffer[0] = obtain_new_buffer(buffer[0], resto_2);
-      fseek(file, disk_number_2, SEEK_SET);
-      fwrite(new_buffer, 1, 1, file);
-      printf("Bufferfsafsfsa: %X\n", new_buffer[0]);
-    };
+void int_to_bytes(unsigned char index[3], int block_number)
+{
+  index[0] = (block_number >> 16) & 0xFF;
+  index[1] = (block_number >> 8) & 0xFF;
+  index[2] = block_number & 0xFF;
+  index[0] = index[0] | 0x80;
+}
 
-    unsigned char obtain_new_buffer(unsigned char byte, int pos_zero) {
-      unsigned char byte_2 = "\0";
-      if (pos_zero == 0)
-      {
-        byte_2 = byte & 0x7F;
-      }
-      else if (pos_zero == 1)
-      {
-        byte_2 = byte & 0xBF;
-      }
-      else if (pos_zero == 2)
-      {
-        byte_2 = byte & 0xDF;
-      }
-      else if (pos_zero == 3)
-      {
-        byte_2 = byte & 0xEF;
-      }
-      else if (pos_zero == 4)
-      {
-        byte_2 = byte & 0xF7;
-      }
-      else if (pos_zero == 5)
-      {
-        byte_2 = byte & 0xFB;
-      }
-      else if (pos_zero == 6)
-      {
-        byte_2 = byte & 0xFD;
-      }
-      else
-      {
-        byte_2 = byte & 0xFE;
-      }
-      return byte_2;
-    };
+int int_from_byte(unsigned char byte)
+{
+  for (int i = 7; i >= 0; --i)
+  {
+    int bit = ((byte & (1 << i)) >> i);
+    if (bit == 0)
+    {
+      return 7 - i;
+    }
+  }
+}
 
-    void rm_recursive(int mem_dir) {
-      fseek(file, mem_dir, SEEK_SET);
-      unsigned char name[29];
-      unsigned char index[3];
-      for (int i = 0; i < 64; i++) {
-        fread(index, 3, 1, file);
-        fread(name, 29, 1, file);
-        if (is_valid(index) > 0) {
-          printf("nombre dentro del : %s\n", name);
-        }
-        if (is_valid(index) == 1) {
-          printf("Arcivho\n");
-          //remove_file//
-          fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
-          unsigned char zero[0];
-          zero[0] = NULL;
-          fwrite(zero, 1, 32, file);
-          fseek(file, mem_dir + 32 * i, SEEK_SET);
-        }
-        else if (is_valid(index) == 2) {
-          printf("Carpeta\n");
-          int disk_number_3 = 2048 * block_number(index);
-          rm_recursive(disk_number_3);
-          fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
-          unsigned char zero[0];
-          zero[0] = NULL;
-          fwrite(zero, 1, 32, file);
-          fseek(file, mem_dir + 32 * i, SEEK_SET);
-        }
-      }
-      update_remove_bitmap(mem_dir / 2048);
-    };
+unsigned char update_byte(unsigned char byte, int pos_zero)
+{
+  unsigned char byte_2 = "\0";
+  if (pos_zero == 0)
+  {
+    byte_2 = byte | 0x80;
+  }
+  else if (pos_zero == 1)
+  {
+    byte_2 = byte | 0x40;
+  }
+  else if (pos_zero == 2)
+  {
+    byte_2 = byte | 0x20;
+  }
+  else if (pos_zero == 3)
+  {
+    byte_2 = byte | 0x10;
+  }
+  else if (pos_zero == 4)
+  {
+    byte_2 = byte | 0x08;
+  }
+  else if (pos_zero == 5)
+  {
+    byte_2 = byte | 0x04;
+  }
+  else if (pos_zero == 6)
+  {
+    byte_2 = byte | 0x02;
+  }
+  else
+  {
+    byte_2 = byte | 0x01;
+  }
+  return byte_2;
+}
+
+void update_remove_bitmap(int index) {
+  unsigned char buffer[0];
+  int blocks_per_blocks = 16384;
+  int result = index / blocks_per_blocks;
+  int resto = index % blocks_per_blocks;
+  int resto_2 = resto % 8;
+  resto = resto / 8;
+  printf("resultado :%i\n", resto_2);
+  int disk_number_2 = (result + 1) * 2048 + resto;
+  printf("disk numerb 2: %i\n", disk_number_2);
+  fseek(file, disk_number_2, SEEK_SET);
+  fread(buffer, 1, 1, file);
+  unsigned char new_buffer[0];
+  new_buffer[0] = obtain_new_buffer(buffer[0], resto_2);
+  fseek(file, disk_number_2, SEEK_SET);
+  fwrite(new_buffer, 1, 1, file);
+  printf("Bufferfsafsfsa: %X\n", new_buffer[0]);
+}
+
+unsigned char obtain_new_buffer(unsigned char byte, int pos_zero) {
+  unsigned char byte_2 = "\0";
+  if (pos_zero == 0)
+  {
+    byte_2 = byte & 0x7F;
+  }
+  else if (pos_zero == 1)
+  {
+    byte_2 = byte & 0xBF;
+  }
+  else if (pos_zero == 2)
+  {
+    byte_2 = byte & 0xDF;
+  }
+  else if (pos_zero == 3)
+  {
+    byte_2 = byte & 0xEF;
+  }
+  else if (pos_zero == 4)
+  {
+    byte_2 = byte & 0xF7;
+  }
+  else if (pos_zero == 5)
+  {
+    byte_2 = byte & 0xFB;
+  }
+  else if (pos_zero == 6)
+  {
+    byte_2 = byte & 0xFD;
+  }
+  else
+  {
+    byte_2 = byte & 0xFE;
+  }
+  return byte_2;
+}
+
+void rm_recursive(int mem_dir) {
+  fseek(file, mem_dir, SEEK_SET);
+  unsigned char name[29];
+  unsigned char index[3];
+  for (int i = 0; i < 64; i++) {
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0) {
+      printf("nombre dentro del : %s\n", name);
+    }
+    if (is_valid(index) == 1) {
+      printf("Arcivho\n");
+      //remove_file//
+      fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
+      unsigned char zero[0];
+      zero[0] = NULL;
+      fwrite(zero, 1, 32, file);
+      fseek(file, mem_dir + 32 * i, SEEK_SET);
+    }
+    else if (is_valid(index) == 2) {
+      printf("Carpeta\n");
+      int disk_number_3 = 2048 * block_number(index);
+      rm_recursive(disk_number_3);
+      fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
+      unsigned char zero[0];
+      zero[0] = NULL;
+      fwrite(zero, 1, 32, file);
+      fseek(file, mem_dir + 32 * i, SEEK_SET);
+    }
+  }
+  update_remove_bitmap(mem_dir / 2048);
+}
+
