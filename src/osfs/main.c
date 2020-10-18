@@ -15,5 +15,32 @@ int main(int argc, char** argv)
   //printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloalo"));
   //os_open("/IMPORTANT.txt", 'r');//
+  //os_mount("./simdiskfilled.bin");//
+  os_ls("/");
+  os_bitmap(1, true);
+  printf("EXISTE?: %i\n", os_exists("/esto no fue mi idea.rar"));
+  printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/alohuhu"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/aloh432uhu"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
+  os_bitmap(1, true);
+  os_ls("/folder");
+  printf("rmdir: %i\n", os_rmdir("/folder", true));
+  os_bitmap(1, true);
+  os_ls("/");
+  os_ls("/folder");
+  printf("Mkdir: %i\n", os_mkdir("/folder"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/alohuhu"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/aloh432uhu"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
+  os_ls("/folder");
+  os_ls("/");
+  fclose(file);
   return 0;
 }
