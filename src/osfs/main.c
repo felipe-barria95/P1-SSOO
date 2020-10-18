@@ -9,10 +9,12 @@ int main(int argc, char **argv){
   printf("EXISTE?: %i\n", os_exists("/esto no fue mi idea.rar"));
   printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
   os_bitmap(1, true);
-  printf("Mkdir: %i\n", os_mkdir("/folder/aloalo/gsdags"));
+  printf("Mkdir: %i\n", os_mkdir("/folder/alohuhu"));
   os_bitmap(1, true);
   os_ls("/folder");
-  os_open("/IMPORTANT.txt", 'r');//
+  printf("rmdir: %i\n", os_rmdir("/folder/alohuhu", false));
+  os_bitmap(1, true);
+  os_ls("/folder");
   fclose(file);
   return 0;
 }

@@ -63,3 +63,7 @@ void int_to_bytes(unsigned char index[3], int block_number);
 int int_from_byte(unsigned char byte);
 
 unsigned char update_byte(unsigned char byte, int pos_zero);
+
+void update_remove_bitmap(int index);
+
+unsigned char obtain_new_buffer(unsigned char byte, int pos_zero);

@@ -116,10 +116,8 @@ int os_exists(char *path)
 
 void os_ls(char *path)
 {
-  unsigned char *index;
-  unsigned char *name;
-  index = calloc(3, sizeof(char));
-  name = calloc(29, sizeof(char));
+  unsigned char index[3];
+  unsigned char name[29];
   for (int i = 0; i < 64; i++){
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
@@ -287,13 +285,14 @@ int os_hardlink(char *orig, char *dest)
 
 int os_mkdir(char *path)
 {
+  int count = 0;
   const char slash = '/';
   unsigned char new_path[29];
   path = path + 1;
   strip_path(path, new_path, 1);
   printf("Path 1: %s\n", path);
   if (strchr(path, slash) != NULL)
-  { //si no llegamos al directorio destino o si estamos en directorio raiz//
+  { //si no llegamos ¡al directorio destino o si estamos en directorio raiz//
     for (int i = 0; i < 64; i++)
     {
       unsigned char index[3];
@@ -349,6 +348,73 @@ int os_mkdir(char *path)
 
 int os_rmdir(char *path, bool recursive)
 {
+  const char slash = '/';
+  unsigned char name[29];
+  unsigned char index[3];
+  unsigned char new_path[29];
+  path = path + 1;
+  if (path[0] == NULL)
+  {
+    return 1;
+  }
+  for (int i = 0; i < 64; i++)
+  {
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0)
+    {
+      if (strchr(path, slash) != NULL)
+      {
+        strip_path(path, new_path, 1);
+        int match = strcmp(new_path, name);
+        if (match == 0)
+        {
+          path = path + strip_new_path(new_path); //obtengo nuevo path, eliminando la carpeta que ya accedi//
+          int disk_number = 2048 * block_number(index);
+          fseek(file, disk_number, SEEK_SET);
+          return os_rmdir(path, recursive);
+        }
+      }
+      else if (strchr(path, slash) == NULL)
+      {
+        int match = strcmp(path, name);
+        if (match == 0)
+        {
+          if (recursive == true){
+
+          }
+          else{
+            unsigned char name_2[29];
+            unsigned char index_2[3];
+            unsigned char zero[0];
+            zero[0] = NULL;
+            int disk_number = 2048 * block_number(index);
+            printf("Block number rmrem: %i\n", block_number(index));
+            unsigned long position;
+            fflush(file);
+            position = ftell(file) - 32;
+            update_remove_bitmap(block_number(index));
+            printf("positibon: %i\n", position);
+            fseek(file, disk_number, SEEK_SET);
+            for (int j = 0; j < 64; j++){
+              fread(index_2, 3, 1, file);
+              fread(name_2, 29, 1, file);
+              if (is_valid(index_2) > 0){
+                printf("La carpeta no esta vacia\n");
+                return 0;
+              }
+            }
+            fseek(file, position, SEEK_SET);
+            fwrite(zero, 1, 32, file);
+          }
+          fseek(file, 0, SEEK_SET);
+          return 1;
+        }
+      }
+    }
+  }
+  fseek(file, 0, SEEK_SET);
+  return 0;
 }
 
 void os_unload(char *orig, char *dest)
@@ -490,7 +556,6 @@ int int_from_byte(unsigned char byte)
 unsigned char update_byte(unsigned char byte, int pos_zero)
 {
   unsigned char byte_2 = "\0";
-  printf("Byte 1: %X\n", byte);
   if (pos_zero == 0)
   {
     byte_2 = byte | 0x80;
@@ -525,3 +590,59 @@ unsigned char update_byte(unsigned char byte, int pos_zero)
   }
   return byte_2;
 }
+
+void update_remove_bitmap(int index){
+  unsigned char buffer[0];
+  int blocks_per_blocks = 16384;
+  int result = index/blocks_per_blocks;
+  int resto = index%blocks_per_blocks;
+  int resto_2 = resto%8;
+  resto = resto/8;
+  printf("resultado :%i\n", resto_2);
+  int disk_number_2 = (result+1)*2048+resto;
+  printf("disk numerb 2: %i\n", disk_number_2);
+  fseek(file, disk_number_2, SEEK_SET);
+  fread(buffer, 1, 1, file);
+  unsigned char new_buffer[0];
+  new_buffer[0] = obtain_new_buffer(buffer[0], resto_2);
+  fseek(file, disk_number_2, SEEK_SET);
+  fwrite(new_buffer, 1, 1, file);
+  printf("Bufferfsafsfsa: %X\n", new_buffer[0]);
+};
+
+unsigned char obtain_new_buffer(unsigned char byte, int pos_zero){
+  unsigned char byte_2 = "\0";
+  if (pos_zero == 0)
+  {
+    byte_2 = byte & 0x7F;
+  }
+  else if (pos_zero == 1)
+  {
+    byte_2 = byte & 0xBF;
+  }
+  else if (pos_zero == 2)
+  {
+    byte_2 = byte & 0xDF;
+  }
+  else if (pos_zero == 3)
+  {
+    byte_2 = byte & 0xEF;
+  }
+  else if (pos_zero == 4)
+  {
+    byte_2 = byte & 0xF7;
+  }
+  else if (pos_zero == 5)
+  {
+    byte_2 = byte & 0xFB;
+  }
+  else if (pos_zero == 6)
+  {
+    byte_2 = byte & 0xFD;
+  }
+  else
+  {
+    byte_2 = byte & 0xFE;
+  }
+  return byte_2;
+};
