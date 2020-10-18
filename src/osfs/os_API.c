@@ -94,14 +94,13 @@ int os_exists(char* path) {
 }
 
 void os_ls(char* path) {
-  const char slash = '/';
   unsigned char index[3];
   unsigned char name[29];
   for (int i = 0; i < 64; i++) {
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0) { //si llegamos al directorio destino o si estamos en directorio raiz//
-      if (path[0] == NULL || path == "/") {
+      if (path[0] == NULL || path[0] == '/') {
         printf("%s\n", name); //falta comparar directorio inicial//
       }
       else {
