@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 void os_mount(char* diskname) {
-  file = fopen(diskname, "rb");
+  file = fopen(diskname, "rw");
 }
 
 void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
@@ -52,6 +52,7 @@ void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
       }
     }
     printf("\n");
+    fseek(file, 0, SEEK_SET);
   }
   free(buffer);
 }
@@ -82,7 +83,6 @@ int os_exists(char* path){
       else if (strchr(path, slash) == NULL){
         int match = strcmp(path, name);
         if (match == 0){
-
           fseek(file, 0, SEEK_SET);
           return 1;
         }
@@ -251,13 +251,16 @@ int os_mkdir(char* path){
     for (int i = 0; i < 64; i++){
       unsigned char index[3];
       unsigned char name[29];
+      printf("new path: %s\n", new_path);
       fread(index, 3, 1, file);
       fread(name, 29, 1, file);
       if (is_valid(index) > 0){
+        printf("name: %s\n", name);
         int match = strcmp(new_path, name);
         if (match == 0){
           path = path + strip_new_path(new_path);
           int disk_number = 2048*block_number(index);
+          printf("Disk numerb: %i\n", disk_number);
           fseek(file, disk_number, SEEK_SET);
           return os_mkdir(path);
         }
@@ -271,16 +274,20 @@ int os_mkdir(char* path){
       fread(index_2, 3, 1, file);
       fread(name_2, 29, 1, file);
       if (is_valid(index_2) == 0){
-        fseek(file, -32, SEEK_SET);
+        printf("llego aca\n");
         unsigned long position;
         fflush(file);
-        position = ftell(file);
+        position = ftell(file) - 32;
+        printf("Disk numer: %i\n", position);
         int asigned_block = update_bitmap();
+        printf("Block asginated: %i\n", asigned_block);
         int_to_bytes(index_2, asigned_block);
+        printf("%X %X %X\n", index_2[0], index_2[1], index_2[2]);
         //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
         fseek(file, position, SEEK_SET);
         fwrite(index_2, 3, 1, file);
-        fwrite(new_path, 3, 1, file);
+        printf("new new newpath: %s\n", new_path);
+        fwrite(new_path, 29, 1, file);
         fseek(file, 0, SEEK_SET);
         return 1;
       }
@@ -378,9 +385,14 @@ int update_bitmap(){
     fread(buffer, 2048, 1, file);
     for (int i = 0; i < 2048; i++){
       if (buffer[i] != 0xFF){
-        printf("agregar desface en byte\n");
+        unsigned char buffer_update;
+        printf("Byte ejecucion: %X\n", buffer[i]);
         int pos_zero = int_from_byte(buffer[i]);
-        update_byte(buffer[i], pos_zero);
+        buffer_update = update_byte(buffer[i], pos_zero);
+        printf("num: %i\n", number+i-1);
+        printf("Byte 10: %X\n", buffer_update);
+        fseek(file, number+i-1, SEEK_SET);
+        fwrite(buffer_update, 1, 1, file);
         count = count + pos_zero;
         return count;
       }
@@ -394,43 +406,45 @@ void int_to_bytes(unsigned char index[3], int block_number){
   index[0] = (block_number >> 16) & 0xFF;
   index[1] = (block_number >> 8) & 0xFF;
   index[2] = block_number & 0xFF;
-  index[0] = index[0] + 0x40;
+  index[0] = index[0] | 0x80;
 }
 
 int int_from_byte(unsigned char byte){
   for (int i = 7; i >= 0; --i){
     int bit = ((byte & (1 << i)) >> i);
     if (bit == 0){
-      return i;
+      return 7-i;
     }
   }
 }
 
-void update_byte(unsigned char byte, int pos_zero){
-  if (pos_zero == 7){
-    byte = byte + 0x80;
-  }
-  else if (pos_zero == 6){
-    byte = byte + 0x40;
-  }
-  else if (pos_zero == 5){
-    byte = byte + 0x20;
-  }
-  else if (pos_zero == 4){
-    byte = byte + 0x10;
-  }
-  else if (pos_zero == 3){
-    byte = byte + 0x08;
-  }
-  else if (pos_zero == 2){
-    byte = byte + 0x04;
+unsigned char update_byte(unsigned char byte, int pos_zero){
+  unsigned char byte_2;
+  printf("Byte 1: %X\n", byte);
+  if (pos_zero == 0){
+    byte_2 = byte | 0x80;
   }
   else if (pos_zero == 1){
-    byte = byte + 0x02;
+    byte_2 = byte | 0x40;
   }
-  else if (pos_zero == 0){
-    byte = byte + 0x01;
+  else if (pos_zero == 2){
+    byte_2 = byte | 0x20;
   }
-  fseek(file, -1, SEEK_CUR);
-  fwrite(byte, 1, 1, file);
+  else if (pos_zero == 3){
+    byte_2 = byte | 0x10;
+  }
+  else if (pos_zero == 4){
+    byte_2 = byte | 0x08;
+  }
+  else if (pos_zero == 5){
+    byte_2 = byte | 0x04;
+  }
+  else if (pos_zero == 6){
+    byte_2 = byte | 0x02;
+  }
+  else if (pos_zero == 7){
+    byte_2 = byte | 0x01;
+  }
+  printf("Byte 2: %X\n", byte);
+  return byte_2;
 }
