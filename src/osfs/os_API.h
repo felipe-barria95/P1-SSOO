@@ -1,5 +1,5 @@
 
-FILE *file;
+FILE* file;
 
 typedef struct File {
   int numero; //
@@ -9,8 +9,9 @@ typedef struct File {
   unsigned int pos_indice; // posición del bloque indice
   int size; //obtener del bloque indice//
   int n_hardlinks;
-  int tamaño; // tamaño en bytes del archivo
   unsigned int direccionamiento[504];//
+  int read_buffer;
+  int write_buffer;
 } osFile;
 
 void os_mount(char* diskname);
@@ -43,9 +44,9 @@ void os_load(char* orig);
 
 void print_ls();
 
-int is_valid (unsigned char* bits);
+int is_valid(unsigned char* bits);
 
-int block_number(unsigned char *bits);
+int block_number(unsigned char* bits);
 
 void strip_path(char* path, unsigned char new_path[29], int i);
 
