@@ -228,38 +228,8 @@ osFile *os_open(char *path, char mode)
     int pos;
     // El siguiente bloque es una copia de os exist para encontrar la ubicación del archivo.
     pos = ret_pos(path);
-    //printf("## validador: %x\n", is_valid(indexxx));
-    //printf("## posicion : %i\n", 2048 * block_number(indexxx));
-    //printf("## posiciṕon de la del directorio del archivo %i\n", pos);
-    //OsFile->pos_direct = pos;   // averiguamos la posición del directorio del archivo
     OsFile->pos_indice = pos;   // averiguamos la posición del directorio del archivo
     fseek(file, pos, SEEK_SET); // llevamos la lectura hasta el bloque de directorio
-    /* // una vez en el
-    unsigned char index[3];
-    fread(index, 3, 1, file);
-    printf("## OPEN validador: %x\n", is_valid(index));
-    printf("## OPEN posicion : %i\n", 2048 * block_number(index));
-
-    printf("## index: %lu, %lu, %lu\n", index[0], index[1], index[2]);
-    printf("## ex: %x\n", index[0]);
-    print_bits(index[0]);
-    printf("\n");
-    printf("## ex: %x\n", index[1]);
-    print_bits(index[1]);
-    printf("\n");
-    printf("## ex: %x\n", index[2]);
-    print_bits(index[2]);
-    printf("\n");
-    printf("## validador: %x\n", is_valid(index));
-    print_bits(index);
-    printf("\n");
-    unsigned char name[29];
-    fread(name, 29, 1, file); // leemos el número de bloque de el bloque indice
-    printf("## nombre: %s\n", name);
-    OsFile->pos_indice = 2048 * block_number(index);
-    fseek(file, OsFile->pos_indice, SEEK_SET); // nos movemos al bloque incice
-    */
-    // una vez en el bloque indice
     unsigned char hardlinks[1];
     fread(hardlinks, 1, 1, file); // leemos el número de hardlinks
     OsFile->n_hardlinks = (int)(hardlinks[0]);
@@ -289,13 +259,15 @@ osFile *os_open(char *path, char mode)
     printf("## resto y restoo: %f\n", resto);
     OsFile->n_indices_adcicionales = resto;
 
-    return OsFile;
+    //vamos al primer puntero a bloque de direccionamiento siemple
+    unsigned char dir_simp[4];
+    fread(dir_simp, 4, 1, file);
   }
 
   // Si es 'w' y el archivo no existe
   else if (mode == 'w' && (!os_exists(path)))
   {
-    //OsFile->file = fopen(path, 'w');
+
     return OsFile;
   }
 
