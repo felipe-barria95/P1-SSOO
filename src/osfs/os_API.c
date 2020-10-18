@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 void os_mount(char* diskname) {
-  file = fopen(diskname, "rw");
+  file = fopen(diskname, "rb+");
 }
 
 void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
@@ -94,9 +94,10 @@ int os_exists(char* path){
 }
 
 void os_ls(char* path){
-  const char slash = '/';
-  unsigned char index[3];
-  unsigned char name[29];
+  unsigned char *index;
+  unsigned char *name;
+  index = calloc(3, sizeof(char));
+  name = calloc(29, sizeof(char));
   for (int i = 0; i < 64; i++){
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
@@ -392,6 +393,8 @@ int update_bitmap(){
         printf("num: %i\n", number+i-1);
         printf("Byte 10: %X\n", buffer_update);
         fseek(file, number+i-1, SEEK_SET);
+        int numecscs = ftell(file);
+        printf("nuem: %i\n", numecscs);
         fwrite(buffer_update, 1, 1, file);
         count = count + pos_zero;
         return count;
@@ -419,7 +422,7 @@ int int_from_byte(unsigned char byte){
 }
 
 unsigned char update_byte(unsigned char byte, int pos_zero){
-  unsigned char byte_2;
+  unsigned char byte_2 = "\0";
   printf("Byte 1: %X\n", byte);
   if (pos_zero == 0){
     byte_2 = byte | 0x80;
@@ -442,7 +445,7 @@ unsigned char update_byte(unsigned char byte, int pos_zero){
   else if (pos_zero == 6){
     byte_2 = byte | 0x02;
   }
-  else if (pos_zero == 7){
+  else{
     byte_2 = byte | 0x01;
   }
   printf("Byte 2: %X\n", byte);

@@ -12,6 +12,7 @@ int main(int argc, char **argv){
   printf("Mkdir: %i\n", os_mkdir("/folder/aloalo"));
   os_bitmap(1, true);
   os_ls("/folder");
-  //os_open("/IMPORTANT.txt", 'r');//
+  os_open("/IMPORTANT.txt", 'r');//
+  fclose(file);
   return 0;
 }
