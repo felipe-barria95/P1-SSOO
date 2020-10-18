@@ -280,12 +280,14 @@ osFile *os_open(char *path, char mode)
     OsFile->n_direccionaminetos = (int)direccionaminetos;
     printf("##cantidad de blouqes de direccionamiento indirecto simple: %i\n", OsFile->n_direccionaminetos);
     double resto = OsFile->n_direccionaminetos - 509;
+    int adicionales = 0;
     printf("## resto y restoo: %f\n", resto);
     if (resto > 0)
     {
-      resto = ceil(resto / 511);
+      adicionales = ceil(resto / 511);
     }
     printf("## resto y restoo: %f\n", resto);
+    OsFile->n_indices_adcicionales = resto;
 
     return OsFile;
   }

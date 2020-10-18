@@ -3,15 +3,16 @@ FILE *file;
 
 typedef struct File
 {
-  int numero;                         //
-  char mode;                          // Para saber si es 'w' o 'r'
-  char *nombre;                       // Corresponde al nombre del archivo, qyuizas podemnos agrgar una extensión
-  unsigned int pos_direct;            // posición del bloque directorio
-  unsigned int pos_indice;            // posición del bloque indice
-  unsigned long int size;             //tamaño del archivo
-  int n_hardlinks;                    // número de hardlinks
-  unsigned int direccionamiento[504]; //
+  int numero;              //
+  char mode;               // Para saber si es 'w' o 'r'
+  char *nombre;            // Corresponde al nombre del archivo, qyuizas podemnos agrgar una extensión
+  unsigned int pos_direct; // posición del bloque directorio
+  unsigned int pos_indice; // posición del bloque indice
+  unsigned long int size;  //tamaño del archivo
+  int n_hardlinks;         // número de hardlinks
+  //unsigned int direccionamiento[504]; //
   int n_direccionaminetos;
+  int n_indices_adcicionales;
 } osFile;
 
 void os_mount(char *diskname);
