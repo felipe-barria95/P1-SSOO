@@ -1,7 +1,5 @@
 
 FILE* file;
-
-
 typedef struct File {
   int numero; //
   char mode; // Para saber si es 'w' o 'r'

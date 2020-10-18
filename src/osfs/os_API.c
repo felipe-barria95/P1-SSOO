@@ -77,7 +77,6 @@ int os_exists(char* path)
   unsigned char index[3];
   unsigned char new_path[29];
   path = path + 1;
-  printf("%s\n", path);
   if (path[0] == NULL)
   {
     return 1;
@@ -92,7 +91,6 @@ int os_exists(char* path)
       if (strchr(path, slash) != NULL)
       {
         strip_path(path, new_path, 1);
-        printf("%s, %s\n", new_path, name);
         int match = strcmp(new_path, name);
         if (match == 0)
         {
@@ -213,7 +211,6 @@ int ret_pos(char* path)
 osFile* os_open(char* path, char mode)
 {
   // RETORNAUN PUNTERO DEL ARCHIVO O NULL SI ES QUE HUBO UN ERROR
-
   // definimos la variable
   OsFile = malloc(sizeof(osFile));
   OsFile->mode = mode;
@@ -313,9 +310,9 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
   int free_blocks = 1048576 - count; // CANTIDAD DE BLOQUES DISPONIBLES
   float temp_blocks = (float)nbytes / 2048;
   int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE SE NECESITAN
-  if (file_desc->mode == 'w')
+  if (file_desc->mode == 'r')
   {
-    printf("estoy aquí\n");
+    printf("%i\n", file_desc->pos_indice);
     fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
     unsigned char next_BDS[4];
     fread(next_BDS, 4, 1, file);
@@ -328,26 +325,27 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
     int aux_DATA;
     aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
     fseek(file, aux_DATA, SEEK_SET);
-    unsigned char DATA_1[2048];
+    char DATA_1[2048];
     fread(DATA_1, 2048, 1, file);
-    printf("ESTO ES DATA: %s\n", DATA_1);
+    printf("ESTO ES DATA: %c, %c, %c\n", DATA_1[0], DATA_1[1], DATA_1[2]);
     if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ALCANZA PARA ESCRIBIR
     {
-      if (nbytes <= free_blocks * 2048) { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
-        printf("menor\n");
+      if (nbytes <= free_blocks) { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
         char* src = malloc(nbytes + 1);
-        memcpy(src, buffer, nbytes);
+        printf("Se escribió parte del archivo\n");
+        memcpy(buffer, 0, nbytes);
         src[nbytes] = '\0';
+        printf("Se escribió parte del archivo 1\n");
+        memcpy("archivo", src, nbytes);
+        printf("Se escribió parte del archivo 2\n");
         free(src);
         return nbytes;
       }
-      else { // SI SE NECESITA ESCRIBIR EN MÁS BLOQUES
-        printf("mayor\n");
+      else { // SI SE NECESITA ESCRIBIR RECURSIVAMENTE EN MÁS BLOQUES
         int count = 0;
         char* src = malloc(free_blocks * 2048);
-        printf("Se escribió parte del archivo 1\n");
         memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048 - 1);
-        printf("Se escribió parte del archivo 2\n");
+
         file_desc->write_buffer += free_blocks * 2048;
         src[free_blocks * 2048] = '\0';
         printf("Se escribió parte del archivo\n");
