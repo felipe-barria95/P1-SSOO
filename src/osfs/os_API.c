@@ -126,7 +126,6 @@ void os_ls(char *path)
       if (path[0] == NULL || path == "/")
       {
         printf("%s\n", name); //falta comparar directorio inicial//
-        printf("Valid: %i\n", is_valid(index));
       }
       else
       {
@@ -665,6 +664,11 @@ void rm_recursive(int mem_dir){
     if (is_valid(index) == 1){
       printf("Arcivho\n");
       //remove_file//
+      fseek(file, mem_dir+32*(i-1), SEEK_SET);
+      unsigned char zero[0];
+      zero[0] = NULL;
+      fwrite(zero, 1, 32, file);
+      fseek(file, mem_dir+32*i, SEEK_SET);
     }
     else if (is_valid(index) == 2){
       printf("Carpeta\n");

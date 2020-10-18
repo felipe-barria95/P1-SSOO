@@ -21,6 +21,15 @@ int main(int argc, char **argv){
   os_bitmap(1, true);
   os_ls("/");
   os_ls("/folder");
+  printf("Mkdir: %i\n", os_mkdir("/folder"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/alohuhu"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/aloh432uhu"));
+  os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
+  os_ls("/folder");
+  os_ls("/");
   fclose(file);
   return 0;
 }
