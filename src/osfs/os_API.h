@@ -10,8 +10,8 @@ typedef struct File {
   int size; //obtener del bloque indice//
   int n_hardlinks;
   unsigned int direccionamiento[504];//
-  int read_buffer;
   int write_buffer;
+  int remaining_block;
 } osFile;
 
 void os_mount(char* diskname);
