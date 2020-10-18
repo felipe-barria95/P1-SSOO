@@ -67,3 +67,5 @@ unsigned char update_byte(unsigned char byte, int pos_zero);
 void update_remove_bitmap(int index);
 
 unsigned char obtain_new_buffer(unsigned char byte, int pos_zero);
+
+void rm_recursive();

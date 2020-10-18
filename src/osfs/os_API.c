@@ -126,6 +126,7 @@ void os_ls(char *path)
       if (path[0] == NULL || path == "/")
       {
         printf("%s\n", name); //falta comparar directorio inicial//
+        printf("Valid: %i\n", is_valid(index));
       }
       else
       {
@@ -380,33 +381,37 @@ int os_rmdir(char *path, bool recursive)
         int match = strcmp(path, name);
         if (match == 0)
         {
+          unsigned long position_2;
+          fflush(file);
+          position_2 = ftell(file);
+          printf("nombre jfda: %s\n", name);
           if (recursive == true){
-
+            int disk_number_2 = 2048 * block_number(index);
+            rm_recursive(disk_number_2);
           }
-          else{
-            unsigned char name_2[29];
-            unsigned char index_2[3];
-            unsigned char zero[0];
-            zero[0] = NULL;
-            int disk_number = 2048 * block_number(index);
-            printf("Block number rmrem: %i\n", block_number(index));
-            unsigned long position;
-            fflush(file);
-            position = ftell(file) - 32;
-            update_remove_bitmap(block_number(index));
-            printf("positibon: %i\n", position);
-            fseek(file, disk_number, SEEK_SET);
-            for (int j = 0; j < 64; j++){
-              fread(index_2, 3, 1, file);
-              fread(name_2, 29, 1, file);
-              if (is_valid(index_2) > 0){
-                printf("La carpeta no esta vacia\n");
-                return 0;
-              }
+          fseek(file, position_2, SEEK_SET);
+          unsigned char name_2[29];
+          unsigned char index_2[3];
+          unsigned char zero[0];
+          zero[0] = NULL;
+          int disk_number = 2048 * block_number(index);
+          printf("Block number rmrem: %i\n", block_number(index));
+          unsigned long position;
+          fflush(file);
+          position = ftell(file) - 32;
+          update_remove_bitmap(block_number(index));
+          printf("positibon: %i\n", position);
+          fseek(file, disk_number, SEEK_SET);
+          for (int j = 0; j < 64; j++){
+            fread(index_2, 3, 1, file);
+            fread(name_2, 29, 1, file);
+            if (is_valid(index_2) > 0){
+              printf("La carpeta no esta vacia\n");
+              return 0;
             }
-            fseek(file, position, SEEK_SET);
-            fwrite(zero, 1, 32, file);
           }
+          fseek(file, position, SEEK_SET);
+          fwrite(zero, 1, 32, file);
           fseek(file, 0, SEEK_SET);
           return 1;
         }
@@ -645,4 +650,32 @@ unsigned char obtain_new_buffer(unsigned char byte, int pos_zero){
     byte_2 = byte & 0xFE;
   }
   return byte_2;
+};
+
+void rm_recursive(int mem_dir){
+  fseek(file, mem_dir, SEEK_SET);
+  unsigned char name[29];
+  unsigned char index[3];
+  for (int i = 0; i < 64; i++){
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index)>0){
+      printf("nombre dentro del : %s\n", name);
+    }
+    if (is_valid(index) == 1){
+      printf("Arcivho\n");
+      //remove_file//
+    }
+    else if (is_valid(index) == 2){
+      printf("Carpeta\n");
+      int disk_number_3 = 2048 * block_number(index);
+      rm_recursive(disk_number_3);
+      fseek(file, mem_dir+32*(i-1), SEEK_SET);
+      unsigned char zero[0];
+      zero[0] = NULL;
+      fwrite(zero, 1, 32, file);
+      fseek(file, mem_dir+32*i, SEEK_SET);
+    }
+  }
+  update_remove_bitmap(mem_dir/2048);
 };
