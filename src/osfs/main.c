@@ -2,15 +2,16 @@
 #include <stdbool.h>
 #include "os_API.h"
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
   //os_mount("./simdiskformat.bin");
-  os_mount("./disk_files/simdiskfilled.bin");//
-  os_ls("/");
+  os_mount("./simdiskfilled.bin"); //
+  os_ls("/folder/god");
   ///os_bitmap(1, true);
   printf("EXISTE?: %i\n", os_exists("/esto no fue mi idea.rar"));
   printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
-  os_open("/music/UN Owen Was Her.mp3", 'r');
+  //os_open("/esto no fue mi idea.rar", 'r');
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloalo"));
-  //os_open("/IMPORTANT.txt", 'r');//
+  os_open("/folder/god/shrek.mp4", 'r'); //
   return 0;
 }
