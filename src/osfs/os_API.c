@@ -3,6 +3,7 @@
 #include <string.h>
 #include "os_API.h"
 #include <stdlib.h>
+#include <math.h>
 
 void os_mount(char* diskname) {
   file = fopen(diskname, "rb");
@@ -168,24 +169,48 @@ osFile* os_open(char* path, char mode){
   OsFile = malloc(sizeof(osFile));
   OsFile->mode = mode;
   OsFile->pos_direct = 0;
-
+  printf("abriendo acrhivo: %s\n", path);
   printf("existe? %i\n", os_exists(path));
   // Si es 'r' y el archivo existe
   if (mode == 'r' && os_exists(path)){
+    fseek(file, 0, SEEK_SET);
     //OsFile->file = fopen(path, 'r');
     int pos;
     // El siguiente bloque es una copia de os exist para encontrar la ubicación del archivo.
-    OsFile->pos_direct = et_pos(path);// averiguamos la posición del directorio del archivo
-    fseek(file, OsFile->pos_direct, SEEK_SET);// llevamos la lectura hasta el bloque de directorio
+    pos = ret_pos(path);
+    printf("## posiciṕon de la del directorio del archivo %i\n", pos);
+    OsFile->pos_direct = pos;// averiguamos la posición del directorio del archivo
+    fseek(file, pos, SEEK_SET);// llevamos la lectura hasta el bloque de directorio
     // una vez en el 
     unsigned char index[3];
     fread(index, 3, 1, file);// leemos el número de bloque de el bloque indice
+    printf("## index: %lu, %lu, %lu\n", index[0],index[1],index[2]);
+    print_bits(index[0]);
+    printf("\n");
+    print_bits(index[1]);
+    printf("\n");
+    print_bits(index[2]);
+    printf("\n");
+    print_bits(index);
+    printf("\n");
     OsFile->pos_indice = 2048*block_number(index);
     fseek(file, OsFile->pos_indice, SEEK_SET);// nos movemos al bloque incice
     // una vez en el bloque indice
     unsigned char hardlinks[1];
     fread(hardlinks, 1, 1, file);// leemos el número de hardlinks
     OsFile->n_hardlinks = (int) hardlinks;
+    printf("## numero de hard links: %i %c %c\n", OsFile->n_hardlinks, OsFile->n_hardlinks, hardlinks);
+    unsigned char size[7];
+    fread(size, 7, 1, file);// leemos el size del archivo
+    OsFile->size = (int) size;
+    printf("## Tamaño %u\n", size);
+    // calculamos la cantidad de punteros a bloques de direccionamineto
+    float bloques = OsFile->size/2048/512;
+    OsFile->n_direccionaminetos = (int) ceil(bloques);
+    printf("##cantidad de blouqes de direccionamiento indirecto simple: %i\n", OsFile->n_direccionaminetos);
+
+
+
 
     
     
@@ -226,11 +251,11 @@ int os_write(osFile* file_desc, void* buffer, int nbytes){
 }
 
 void os_close(osFile* file_desc){
-  //Si está en modo w y el tamaño es mayor a 0
+  //Si está en modo w y el size es mayor a 0
   if (file_desc->mode == 'w'){
     if (file_desc->size > 0){
       //Falta chequear si el archivo existe
-      uint32_t block_size = 4; //en bytes
+
       
     }
   }

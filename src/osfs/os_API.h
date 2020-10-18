@@ -7,10 +7,10 @@ typedef struct File {
   char* nombre; // Corresponde al nombre del archivo, qyuizas podemnos agrgar una extensión
   unsigned int pos_direct; // posición del bloque directorio
   unsigned int pos_indice; // posición del bloque indice
-  int size; //obtener del bloque indice//
-  int n_hardlinks;
-  int tamaño; // tamaño en bytes del archivo
+  int size; //tamaño del archivo
+  int n_hardlinks; // número de hardlinks
   unsigned int direccionamiento[504];//
+  int n_direccionaminetos;
 } osFile;
 
 void os_mount(char* diskname);
