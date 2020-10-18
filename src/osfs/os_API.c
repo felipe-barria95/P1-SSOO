@@ -236,19 +236,52 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
   fseek(file, 0, SEEK_SET);
   int free_blocks = 1048576 - count; // CANTIDAD DE BLOQUES DISPONIBLES
   float temp_blocks = (float)nbytes / 2048;
-  int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE NECESITO
-  if (file_desc->mode == 'w')
+  int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE SE NECESITAN
+  printf("estoy aca\n");
+  if (file_desc->mode == 'r')
   {
-    if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ME ALCANZA PARA ESCRIBIR
+    printf("estoy aquí\n");
+    fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
+    unsigned char next_BDS[4];
+    fread(next_BDS, 4, 1, file);
+    int aux_bds;
+    aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
+    printf("ESTO ES EL PUNTERO A DATA: %i\n", aux_bds);
+    fseek(file, aux_bds, SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
+    unsigned char next_DATA[4];
+    fread(next_DATA, 4, 1, file);
+    int aux_DATA;
+    aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
+    fseek(file, aux_DATA, SEEK_SET);
+    unsigned char DATA_1[2048];
+    fread(DATA_1, 2048, 1, file);
+    printf("ESTO ES DATA: %s\n", DATA_1);
+    if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ALCANZA PARA ESCRIBIR
     {
-      char* dest = malloc(nbytes + 1);
-      memcpy(dest, buffer + file_desc->read_buffer, nbytes);
-      dest[nbytes] = '\0';
-      memcpy("archivo", dest, nbytes);//modificar archivo
-      free(dest);
+      if (nbytes <= free_blocks * 2048) { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
+        char* src = malloc(nbytes + 1);
+        memcpy(src, buffer, nbytes);
+        src[nbytes] = '\0';
+        memcpy("dest", src, nbytes);//modificar archivo
+        free(src);
+        return nbytes;
+      }
+      else { // SI SE NECESITA ESCRIBIR EN MÁS BLOQUES
+        int count = 0;
+        char* src = malloc(free_blocks * 2048);
+        memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048);
+        file_desc->write_buffer += free_blocks * 2048;
+        src[free_blocks * 2048] = '\0';
+        memcpy("dest", src, free_blocks * 2048);//modificar archivo
+        free(src);
+        count += os_write(file_desc, buffer, nbytes);
+        return count;
+      }
     }
-    else // SI NO ME ALCANZA, NO ESCRIBO
+    else {// SI NO ME ALCANZA, NO SE ESCRIBE
       fprintf(stderr, "Error: No space available");
+      return 0;
+    }
   }
   file_desc->size = 0;
   return 0;
