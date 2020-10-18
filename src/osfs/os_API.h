@@ -1,6 +1,7 @@
 
 FILE* file;
 
+
 typedef struct File {
   int numero; //
   char mode; // Para saber si es 'w' o 'r'
@@ -16,6 +17,8 @@ typedef struct File {
   int n_indices_adcicionales;
   int ultima_posicion;
 } osFile;
+
+osFile* OsFile;
 
 void os_mount(char* diskname);
 

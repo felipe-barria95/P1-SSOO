@@ -8,7 +8,6 @@
 void os_mount(char* diskname)
 {
   file = fopen(diskname, "r");
-  printf("## puntero al file: %p\n", file);
 }
 
 void os_bitmap(unsigned num, bool hex)
@@ -78,6 +77,7 @@ int os_exists(char* path)
   unsigned char index[3];
   unsigned char new_path[29];
   path = path + 1;
+  printf("%s\n", path);
   if (path[0] == NULL)
   {
     return 1;
@@ -88,9 +88,11 @@ int os_exists(char* path)
     fread(name, 29, 1, file);
     if (is_valid(index) > 0)
     {
+
       if (strchr(path, slash) != NULL)
       {
         strip_path(path, new_path, 1);
+        printf("%s, %s\n", new_path, name);
         int match = strcmp(new_path, name);
         if (match == 0)
         {
@@ -128,7 +130,12 @@ void os_ls(char* path)
     if (is_valid(index) > 0)
     { //si llegamos al directorio destino o si estamos en directorio raiz//
       //if (path[0] == NULL || path[0] == "/")
-      if (path[0] == NULL || path[0] == '/')
+      int n = 0;
+      while (path[n] != NULL)
+      {
+        n++;
+      }
+      if (path[0] == NULL || (path[0] == '/' && n == 1))
       {
         printf("%s\n", name); //falta comparar directorio inicial//
       }
@@ -137,7 +144,7 @@ void os_ls(char* path)
         unsigned char new_path[29];
         strip_path(path, new_path, 2);
         int match = strcmp(new_path, name); //si es 0, hay match//
-        //FALTA LAST//
+          //FALTA LAST//
         if (match == 0)
         {
           path = path + strip_new_path(new_path) + 1;
@@ -208,9 +215,10 @@ osFile* os_open(char* path, char mode)
   // RETORNAUN PUNTERO DEL ARCHIVO O NULL SI ES QUE HUBO UN ERROR
 
   // definimos la variable
-  osFile* OsFile;
   OsFile = malloc(sizeof(osFile));
   OsFile->mode = mode;
+  printf("puntero al osFile %p\n", OsFile);
+  printf("modo: %c\n", OsFile->mode);
   OsFile->pos_direct = 0;
   printf("abriendo acrhivo: %s\n", path);
   printf("existe? %i\n", os_exists(path));
@@ -267,7 +275,7 @@ osFile* os_open(char* path, char mode)
   // Si no es ninguo de los dos o el achivo existo o no exite
   else
   {
-    printf("ERROR No se pudo habrir el archivo\n");
+    printf("ERROR No se pudo abrir el archivo\n");
     free(OsFile);
     return NULL;
   }
@@ -305,8 +313,7 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
   int free_blocks = 1048576 - count; // CANTIDAD DE BLOQUES DISPONIBLES
   float temp_blocks = (float)nbytes / 2048;
   int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE SE NECESITAN
-  printf("estoy aca\n");
-  if (file_desc->mode == 'r')
+  if (file_desc->mode == 'w')
   {
     printf("estoy aquí\n");
     fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
@@ -327,20 +334,23 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
     if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ALCANZA PARA ESCRIBIR
     {
       if (nbytes <= free_blocks * 2048) { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
+        printf("menor\n");
         char* src = malloc(nbytes + 1);
         memcpy(src, buffer, nbytes);
         src[nbytes] = '\0';
-        memcpy("dest", src, nbytes);//modificar archivo
         free(src);
         return nbytes;
       }
       else { // SI SE NECESITA ESCRIBIR EN MÁS BLOQUES
+        printf("mayor\n");
         int count = 0;
         char* src = malloc(free_blocks * 2048);
-        memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048);
+        printf("Se escribió parte del archivo 1\n");
+        memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048 - 1);
+        printf("Se escribió parte del archivo 2\n");
         file_desc->write_buffer += free_blocks * 2048;
         src[free_blocks * 2048] = '\0';
-        memcpy("dest", src, free_blocks * 2048);//modificar archivo
+        printf("Se escribió parte del archivo\n");
         free(src);
         count += os_write(file_desc, buffer, nbytes);
         return count;
@@ -351,7 +361,6 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
       return 0;
     }
   }
-  file_desc->size = 0;
   return 0;
 }
 
