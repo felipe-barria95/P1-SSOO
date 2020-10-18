@@ -152,7 +152,8 @@ int ret_pos(char* path){
         if (match == 0){
           fseek(file, 0, SEEK_SET);
           pos = 2048*block_number(index);
-          return pos;
+          printf("## idice: %i\n", pos/2048);
+          return pos+32*(i-1);
         }
       }
     }
@@ -193,6 +194,9 @@ osFile* os_open(char* path, char mode){
     printf("\n");
     print_bits(index);
     printf("\n");
+    unsigned char name[29];
+    fread(name, 29, 1, file);// leemos el número de bloque de el bloque indice
+    printf("## nombre: %s\n", name);
     OsFile->pos_indice = 2048*block_number(index);
     fseek(file, OsFile->pos_indice, SEEK_SET);// nos movemos al bloque incice
     // una vez en el bloque indice
