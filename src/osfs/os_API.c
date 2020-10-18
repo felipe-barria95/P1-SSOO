@@ -333,7 +333,7 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
       if (nbytes <= free_blocks) { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
         char* src = malloc(nbytes + 1);
         printf("Se escribió parte del archivo\n");
-        memcpy(buffer, 0, nbytes);
+        memcpy(src, buffer + 0, nbytes);
         src[nbytes] = '\0';
         printf("Se escribió parte del archivo 1\n");
         memcpy("archivo", src, nbytes);
