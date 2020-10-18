@@ -302,9 +302,19 @@ int os_read(osFile* file_desc, void* buffer, int nbytes)
   // retorna la cantidad de byts leidos
   if (file_desc->mode == 'r')
   {
-    //int avance = fread(buffer, nbytes, 1, file_desc->file);
-    //file_desc->pos_direct += avance;
-    //return avance;
+    fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
+    unsigned char next_BDS[4];
+    fread(next_BDS, 4, 1, file);
+    int aux_bds;
+    aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
+    fseek(file, aux_bds, SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
+    unsigned char next_DATA[4];
+    fread(next_DATA, 4, 1, file);
+    int aux_DATA;
+    aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
+    fseek(file, aux_DATA, SEEK_SET);
+    char DATA_1[2048];
+    fread(DATA_1, 2048, 1, file);
   }
   else
   {
@@ -330,15 +340,13 @@ int os_write(osFile* file_desc, void* buffer, int nbytes)
   int free_blocks = 1048576 - count; // CANTIDAD DE BLOQUES DISPONIBLES
   float temp_blocks = (float)nbytes / 2048;
   int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE SE NECESITAN
-  if (file_desc->mode == 'r')
+  if (file_desc->mode == 'w')
   {
-    printf("%i\n", file_desc->pos_indice);
     fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
     unsigned char next_BDS[4];
     fread(next_BDS, 4, 1, file);
     int aux_bds;
     aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
-    printf("ESTO ES EL PUNTERO A DATA: %i\n", aux_bds);
     fseek(file, aux_bds, SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
     unsigned char next_DATA[4];
     fread(next_DATA, 4, 1, file);
@@ -347,7 +355,6 @@ int os_write(osFile* file_desc, void* buffer, int nbytes)
     fseek(file, aux_DATA, SEEK_SET);
     char DATA_1[2048];
     fread(DATA_1, 2048, 1, file);
-    printf("ESTO ES DATA: %c, %c, %c\n", DATA_1[0], DATA_1[1], DATA_1[2]);
     if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ALCANZA PARA ESCRIBIR
     {
       if (nbytes <= file_desc->resto_bloque_data)
@@ -366,7 +373,6 @@ int os_write(osFile* file_desc, void* buffer, int nbytes)
         memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048 - 1);
         file_desc->write_buffer += free_blocks * 2048;
         src[free_blocks * 2048] = '\0';
-        printf("Se escribió parte del archivo\n");
         free(src);
         count += os_write(file_desc, buffer, nbytes);
         return count;
