@@ -5,14 +5,14 @@
 #include <stdlib.h>
 #include <math.h>
 
-void os_mount(char* diskname)
+void os_mount(char *diskname)
 {
   file = fopen(diskname, "r");
 }
 
 void os_bitmap(unsigned num, bool hex)
 { //FALTA imprimir en stderr//
-  unsigned char* buffer;
+  unsigned char *buffer;
   buffer = calloc(2048, sizeof(char));
   if (num == 0)
   {
@@ -70,7 +70,7 @@ void os_bitmap(unsigned num, bool hex)
   free(buffer);
 }
 
-int os_exists(char* path)
+int os_exists(char *path)
 {
   const char slash = '/';
   unsigned char name[29];
@@ -116,7 +116,7 @@ int os_exists(char* path)
   return 0;
 }
 
-void os_ls(char* path)
+void os_ls(char *path)
 {
   const char slash = '/';
   unsigned char index[3];
@@ -142,7 +142,7 @@ void os_ls(char* path)
         unsigned char new_path[29];
         strip_path(path, new_path, 2);
         int match = strcmp(new_path, name); //si es 0, hay match//
-          //FALTA LAST//
+                                            //FALTA LAST//
         if (match == 0)
         {
           path = path + strip_new_path(new_path) + 1;
@@ -157,7 +157,7 @@ void os_ls(char* path)
   fseek(file, 0, SEEK_SET);
 }
 
-int ret_pos(char* path)
+int ret_pos(char *path)
 {
   const char slash = '/';
   int pos;
@@ -208,7 +208,7 @@ int ret_pos(char* path)
   return 0;
 }
 
-osFile* os_open(char* path, char mode)
+osFile *os_open(char *path, char mode)
 {
   // RETORNAUN PUNTERO DEL ARCHIVO O NULL SI ES QUE HUBO UN ERROR
   // definimos la variable
@@ -239,7 +239,12 @@ osFile* os_open(char* path, char mode)
     printf("## Tamaño: %i\n", OsFile->size);
     // calculamos la cantidad de punteros a bloques de direccionamineto
     double bloques = ceil(((double)OsFile->size) / 2048);
+    printf("## cantidad de bloques; %f\n", bloques);
+    OsFile->resto_bloque_data = 2048 - (OsFile->size % 2048);
+    printf("## RESTO bloque data: %i\n", OsFile->resto_bloque_data);
     double direccionaminetos = ceil(bloques / 512);
+    OsFile->resto_BDS = 512 - (((int)bloques) % 512);
+    printf("## RESTO BDS: %i\n", OsFile->resto_BDS);
     OsFile->n_direccionaminetos = (int)direccionaminetos;
     printf("## cantidad de blouqes de direccionamiento indirecto simple: %i\n", OsFile->n_direccionaminetos);
     double resto = OsFile->n_direccionaminetos - 509;
@@ -251,9 +256,11 @@ osFile* os_open(char* path, char mode)
     printf("## bloques  que no caben en el indice principal: %f\n", resto);
     OsFile->n_indices_adcicionales = resto;
 
+    // aqui calculamos los bytes que quedan en el bloque de data:
+
     //vamos al primer puntero a bloque de direccionamiento siemple
-        //unsigned char dir_simp[4];
-        //fread(dir_simp, 4, 1, file);
+    //unsigned char dir_simp[4];
+    //fread(dir_simp, 4, 1, file);
 
     fseek(file, 0, SEEK_SET);
     return OsFile;
@@ -263,9 +270,9 @@ osFile* os_open(char* path, char mode)
   else if (mode == 'w')
   {
     get_folder_path(path);
-    fseek(file, 0, SEEK_SET);
+    //fseek(file, 0, SEEK_SET);
     // tengo que seguir el path hasta la ubicación del archivo
-
+    printf("## completamos\n");
     return OsFile;
   }
 
@@ -278,7 +285,7 @@ osFile* os_open(char* path, char mode)
   }
 }
 
-int os_read(osFile* file_desc, void* buffer, int nbytes)
+int os_read(osFile *file_desc, void *buffer, int nbytes)
 {
   // Esta funcion deviera funcionar solo si el archivo está abierto y existe el buffer
   // retorna la cantidad de byts leidos
@@ -294,11 +301,13 @@ int os_read(osFile* file_desc, void* buffer, int nbytes)
   }
 }
 
-int os_write(osFile* file_desc, void* buffer, int nbytes) {
-  unsigned char* aux_buffer;
+int os_write(osFile *file_desc, void *buffer, int nbytes)
+{
+  unsigned char *aux_buffer;
   aux_buffer = calloc(2048, sizeof(char));
   int count = 0;
-  for (int j = 1; j < 65; j++) {
+  for (int j = 1; j < 65; j++)
+  {
     int number = 2048 * j;
     fseek(file, number, SEEK_SET);
     fread(buffer, 2048, 1, file);
@@ -330,20 +339,22 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
     printf("ESTO ES DATA: %c, %c, %c\n", DATA_1[0], DATA_1[1], DATA_1[2]);
     if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ALCANZA PARA ESCRIBIR
     {
-      if (nbytes <= free_blocks) { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
-        char* src = malloc(nbytes + 1);
+      if (nbytes <= free_blocks)
+      { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
+        char *src = malloc(nbytes + 1);
         printf("Se escribió parte del archivo\n");
-        memcpy(buffer, 0, nbytes);
+        //memcpy(buffer, 0, nbytes);
         src[nbytes] = '\0';
         printf("Se escribió parte del archivo 1\n");
-        memcpy("archivo", src, nbytes);
+        //memcpy("archivo", src, nbytes);
         printf("Se escribió parte del archivo 2\n");
         free(src);
         return nbytes;
       }
-      else { // SI SE NECESITA ESCRIBIR RECURSIVAMENTE EN MÁS BLOQUES
+      else
+      { // SI SE NECESITA ESCRIBIR RECURSIVAMENTE EN MÁS BLOQUES
         int count = 0;
-        char* src = malloc(free_blocks * 2048);
+        char *src = malloc(free_blocks * 2048);
         memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048 - 1);
 
         file_desc->write_buffer += free_blocks * 2048;
@@ -354,33 +365,36 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
         return count;
       }
     }
-    else {// SI NO ME ALCANZA, NO SE ESCRIBE
-      fprintf(stderr, "Error: No space available");
+    else
+    { // SI NO ME ALCANZA, NO SE ESCRIBE
+      fprintf(stderr, "Error: No space available\n");
       return 0;
     }
   }
   return 0;
 }
 
-void os_close(osFile* file_desc) {
+void os_close(osFile *file_desc)
+{
   if (file_desc->mode == 'w')
   {
-    if (file_desc->size > 0) {
+    if (file_desc->size > 0)
+    {
       printf("");
     }
   }
   free(file_desc);
 }
 
-void os_rm(char* path)
+void os_rm(char *path)
 {
 }
 
-int os_hardlink(char* orig, char* dest)
+int os_hardlink(char *orig, char *dest)
 {
 }
 
-int os_mkdir(char* path)
+int os_mkdir(char *path)
 {
   const char slash = '/';
   unsigned char new_path[29];
@@ -436,15 +450,15 @@ int os_mkdir(char* path)
   }
 }
 
-int os_rmdir(char* path, bool recursive)
+int os_rmdir(char *path, bool recursive)
 {
 }
 
-void os_unload(char* orig, char* dest)
+void os_unload(char *orig, char *dest)
 {
 }
 
-void os_load(char* orig)
+void os_load(char *orig)
 {
 }
 
@@ -464,17 +478,17 @@ void print_ls()
   fseek(file, 0, SEEK_SET);
 }
 
-int is_valid(unsigned char* bits)
+int is_valid(unsigned char *bits)
 {
   return bits[0] >> 6;
 }
 
-int block_number(unsigned char* bits)
+int block_number(unsigned char *bits)
 {
   return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
 }
 
-void strip_path(char* path, unsigned char new_path[29], int i)
+void strip_path(char *path, unsigned char new_path[29], int i)
 {
   const char slash = '/';
   int j = 0;
@@ -501,8 +515,9 @@ void strip_path(char* path, unsigned char new_path[29], int i)
   }
 }
 
-void get_folder_path(char* path, unsigned char new_path[29])
+void get_folder_path(char *path)
 {
+  unsigned char new_path[29];
   // contar cantidad de "/"s
   int n = 0;
   int cantidad = 0;
@@ -520,6 +535,7 @@ void get_folder_path(char* path, unsigned char new_path[29])
   const char slash = '/';
   int j = 0;
   int h = 0;
+  printf("## path: %s\n", path);
   for (int k = 0; k < 29; k++)
   {
     if (j < cantidad - 1)
@@ -527,6 +543,7 @@ void get_folder_path(char* path, unsigned char new_path[29])
       if (path[k] == slash)
       {
         j++;
+        printf("un slaaaaash\n");
       }
       else
       {
@@ -540,7 +557,8 @@ void get_folder_path(char* path, unsigned char new_path[29])
       h++;
     }
   }
-  //printf(nwe)
+  printf("## nuevo path: %s\n", new_path);
+  return new_path;
 }
 
 int strip_new_path(unsigned char new_path[29])
@@ -574,7 +592,7 @@ int bits_in_char(unsigned char val)
 
 int update_bitmap()
 {
-  unsigned char* buffer;
+  unsigned char *buffer;
   buffer = calloc(2048, sizeof(char));
   int count = 0;
   for (int j = 1; j < 65; j++)
