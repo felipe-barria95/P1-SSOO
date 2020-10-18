@@ -61,3 +61,5 @@ int bits_in_char(unsigned char val);
 int update_bitmap();
 
 void int_to_bytes(unsigned char index[3], int block_number);
+
+void os_desmontar();

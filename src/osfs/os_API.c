@@ -7,7 +7,8 @@
 
 void os_mount(char *diskname)
 {
-  file = fopen(diskname, "rb");
+  file = fopen(diskname, "r");
+  printf("## puntero al file: %p\n", file);
 }
 
 void os_bitmap(unsigned num, bool hex)
@@ -126,7 +127,8 @@ void os_ls(char *path)
     fread(name, 29, 1, file);
     if (is_valid(index) > 0)
     { //si llegamos al directorio destino o si estamos en directorio raiz//
-      if (path[0] == NULL || path[0] == "/")
+      //if (path[0] == NULL || path[0] == "/")
+      if (path[0] == NULL || path[0] == '/')
       {
         printf("%s\n", name); //falta comparar directorio inicial//
       }
@@ -171,9 +173,6 @@ int ret_pos(char *path)
     index_anterior[3] = index[2];
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
-    printf("## validador: %x\n", is_valid(index));
-    printf("## posicion : %i\n", 2048 * block_number(index));
-    printf("## nombre   : %s\n", name);
     if (is_valid(index) > 0)
     {
       if (strchr(path, slash) != NULL)
@@ -194,12 +193,7 @@ int ret_pos(char *path)
         if (match == 0)
         {
           fseek(file, 0, SEEK_SET);
-
-          printf("## RET validador: %x\n", is_valid(index));
-          printf("## RET posicion : %i\n", 2048 * block_number(index));
-
           pos = 2048 * block_number(index);
-          printf("## indice: %i\n", pos / 2048);
           return pos;
         }
       }
@@ -236,40 +230,36 @@ osFile *os_open(char *path, char mode)
     printf("## numero de hard links: %i\n", OsFile->n_hardlinks);
     unsigned char size[7];
     fread(size, 7, 1, file); // leemos el size del archivo
-
     OsFile->size = (size[3] << 24) | (size[4] << 16) | (size[5] << 8) | size[6];
-
-    printf("## Tamaño %u, %u, %u, %u, %u, %u, %u\n", size[0], size[1], size[2], size[3], size[4], size[5], size[6]);
-    printf("## Tamaño %x%x%x%x%x%x%x\n", size[0], size[1], size[2], size[3], size[4], size[5], size[6]);
-    printf("## VALOR ESTRELLA : %i\n", OsFile->size);
+    printf("## Tamaño: %i\n", OsFile->size);
     // calculamos la cantidad de punteros a bloques de direccionamineto
     double bloques = ceil(((double)OsFile->size) / 2048);
-    printf("## bloques ceil: %f\n", bloques);
     double direccionaminetos = ceil(bloques / 512);
-    printf("## directc ceil: %f\n", direccionaminetos);
     OsFile->n_direccionaminetos = (int)direccionaminetos;
-    printf("##cantidad de blouqes de direccionamiento indirecto simple: %i\n", OsFile->n_direccionaminetos);
+    printf("## cantidad de blouqes de direccionamiento indirecto simple: %i\n", OsFile->n_direccionaminetos);
     double resto = OsFile->n_direccionaminetos - 509;
     int adicionales = 0;
-    printf("## resto y restoo: %f\n", resto);
     if (resto > 0)
     {
       adicionales = ceil(resto / 511);
     }
-    printf("## resto y restoo: %f\n", resto);
+    printf("## bloques  que no caben en el indice principal: %f\n", resto);
     OsFile->n_indices_adcicionales = resto;
 
     //vamos al primer puntero a bloque de direccionamiento siemple
-    unsigned char dir_simp[4];
-    fread(dir_simp, 4, 1, file);
+    //unsigned char dir_simp[4];
+    //fread(dir_simp, 4, 1, file);
 
     fseek(file, 0, SEEK_SET);
     return OsFile;
   }
 
   // Si es 'w' y el archivo no existe
-  else if (mode == 'w' && (!os_exists(path)))
+  else if (mode == 'w')
   {
+    get_folder_path(path);
+    fseek(file, 0, SEEK_SET);
+    // tengo que seguir el path hasta la ubicación del archivo
 
     return OsFile;
   }
@@ -446,6 +436,48 @@ void strip_path(char *path, unsigned char new_path[29], int i)
   }
 }
 
+void get_folder_path(char *path, unsigned char new_path[29])
+{
+  // contar cantidad de "/"s
+  int n = 0;
+  int cantidad = 0;
+  while (path[n] != NULL)
+  {
+    if (path[n] == '/')
+    {
+      cantidad++;
+    }
+    n++;
+  }
+  printf("## cantidad de slashs: %i\n", cantidad);
+
+  // ahora dejamos el path no n-1 slash
+  const char slash = '/';
+  int j = 0;
+  int h = 0;
+  for (int k = 0; k < 29; k++)
+  {
+    if (j < cantidad - 1)
+    {
+      if (path[k] == slash)
+      {
+        j++;
+      }
+      else
+      {
+        new_path[h] = path[k];
+        h++;
+      }
+    }
+    else
+    {
+      new_path[h] = NULL;
+      h++;
+    }
+  }
+  //printf(nwe)
+}
+
 int strip_new_path(unsigned char new_path[29])
 {
   int i = 0;
@@ -503,4 +535,9 @@ void int_to_bytes(unsigned char index[3], int block_number)
   index[1] = (block_number >> 8) & 0xFF;
   index[2] = block_number & 0xFF;
   index[0] = index[0] + 0x40;
+}
+
+void os_desmontar()
+{
+  fclose(file);
 }
