@@ -3,6 +3,7 @@
 #include <string.h>
 #include "os_API.h"
 #include <stdlib.h>
+#include <math.h>
 
 void os_mount(char* diskname) {
   file = fopen(diskname, "rb");
@@ -94,14 +95,13 @@ int os_exists(char* path) {
 }
 
 void os_ls(char* path) {
-  const char slash = '/';
   unsigned char index[3];
   unsigned char name[29];
   for (int i = 0; i < 64; i++) {
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0) { //si llegamos al directorio destino o si estamos en directorio raiz//
-      if (path[0] == NULL || path == "/") {
+      if (path[0] == NULL || path[0] == '/') {
         printf("%s\n", name); //falta comparar directorio inicial//
       }
       else {
@@ -234,206 +234,192 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
   }
   free(aux_buffer);
   fseek(file, 0, SEEK_SET);
-  int free_blocks = 1048576 - count;
+  int free_blocks = 1048576 - count; // CANTIDAD DE BLOQUES DISPONIBLES
   float temp_blocks = (float)nbytes / 2048;
-  int blocks = ceil(temp_blocks) + 1;;
-  int bytes_write;
+  int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE NECESITO
   if (file_desc->mode == 'w')
   {
-    if (free_blocks >= blocks)
+    if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ME ALCANZA PARA ESCRIBIR
     {
-      if ((file_desc->write_buffer + nbytes) < 2048)//verificar número
-        bytes_write = nbytes;
-      else
-        bytes_write = 0;
-      char* ready = substr(buffer, file_desc->read_buffer, bytes_write);
-      ready[bytes_write] = '\0';
-      memcpy("archivo", ready, bytes_write);//modificar archivo
-      free(ready);
+      char* dest = malloc(nbytes + 1);
+      memcpy(dest, buffer + file_desc->read_buffer, nbytes);
+      dest[nbytes] = '\0';
+      memcpy("archivo", dest, nbytes);//modificar archivo
+      free(dest);
     }
-    else
+    else // SI NO ME ALCANZA, NO ESCRIBO
       fprintf(stderr, "Error: No space available");
   }
+  file_desc->size = 0;
+  return 0;
+}
 
-  void os_close(osFile * file_desc) {
-    if (file_desc->mode == 'w')
-    {
-      if (file_desc->size > 0) {
-        printf("");
-      }
-    }
-    free(file_desc);
-  }
-
-  void os_close(osFile * file_desc) {
-    //Si está en modo w y el tamaño es mayor a 0
-    if (file_desc->mode == 'w') {
-      if (file_desc->size > 0) {
-        //Falta chequear si el archivo existe
-        uint32_t block_size = 4; //en bytes
-
-      }
-    }
-
-    //Si está en modo
-  }
-
-  void os_rm(char* path) {
-  }
-
-  int os_hardlink(char* orig, char* dest) {
-
-  }
-
-  int os_mkdir(char* path) {
-    const char slash = '/';
-    unsigned char new_path[29];
-    path = path + 1;
-    strip_path(path, new_path, 1);
-    printf("Path 1: %s\n", path);
-    if (strchr(path, slash) != NULL) { //si no llegamos al directorio destino o si estamos en directorio raiz//
-      for (int i = 0; i < 64; i++) {
-        unsigned char index[3];
-        unsigned char name[29];
-        fread(index, 3, 1, file);
-        fread(name, 29, 1, file);
-        if (is_valid(index) > 0) {
-          int match = strcmp(new_path, name);
-          if (match == 0) {
-            path = path + strip_new_path(new_path);
-            int disk_number = 2048 * block_number(index);
-            fseek(file, disk_number, SEEK_SET);
-            return os_mkdir(path);
-          }
-        }
-      }
-    }
-    else {
-      unsigned char index_2[3];
-      unsigned char name_2[29];
-      for (int j = 0; j < 64; j++) {
-        fread(index_2, 3, 1, file);
-        fread(name_2, 29, 1, file);
-        if (is_valid(index_2) == 0) {
-          fseek(file, -32, SEEK_SET);
-          unsigned long position;
-          fflush(file);
-          position = ftell(file);
-
-          int asigned_block = update_bitmap();
-          int_to_bytes(index_2, asigned_block);
-          //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
-          fseek(file, position, SEEK_SET);
-          fwrite(index_2, 3, 1, file);
-
-          fseek(file, 0, SEEK_SET);
-          return 1;
-        }
-      }
+void os_close(osFile* file_desc) {
+  if (file_desc->mode == 'w')
+  {
+    if (file_desc->size > 0) {
+      printf("");
     }
   }
+  free(file_desc);
+}
 
+void os_rm(char* path) {
+}
 
-  int os_rmdir(char* path, bool recursive) {
+int os_hardlink(char* orig, char* dest) {
 
-  }
+}
 
-  void os_unload(char* orig, char* dest) {
-
-  }
-
-  void os_load(char* orig) {
-
-  }
-
-  void print_ls() {
+int os_mkdir(char* path) {
+  const char slash = '/';
+  unsigned char new_path[29];
+  path = path + 1;
+  strip_path(path, new_path, 1);
+  printf("Path 1: %s\n", path);
+  if (strchr(path, slash) != NULL) { //si no llegamos al directorio destino o si estamos en directorio raiz//
     for (int i = 0; i < 64; i++) {
-      unsigned char name[29];
       unsigned char index[3];
+      unsigned char name[29];
       fread(index, 3, 1, file);
       fread(name, 29, 1, file);
       if (is_valid(index) > 0) {
-        printf("%s\n", name);
+        int match = strcmp(new_path, name);
+        if (match == 0) {
+          path = path + strip_new_path(new_path);
+          int disk_number = 2048 * block_number(index);
+          fseek(file, disk_number, SEEK_SET);
+          return os_mkdir(path);
+        }
       }
     }
-    fseek(file, 0, SEEK_SET);
   }
+  else {
+    unsigned char index_2[3];
+    unsigned char name_2[29];
+    for (int j = 0; j < 64; j++) {
+      fread(index_2, 3, 1, file);
+      fread(name_2, 29, 1, file);
+      if (is_valid(index_2) == 0) {
+        fseek(file, -32, SEEK_SET);
+        unsigned long position;
+        fflush(file);
+        position = ftell(file);
 
-  int is_valid(unsigned char* bits) {
-    return bits[0] >> 6;
+        int asigned_block = update_bitmap();
+        int_to_bytes(index_2, asigned_block);
+        //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
+        fseek(file, position, SEEK_SET);
+        fwrite(index_2, 3, 1, file);
+
+        fseek(file, 0, SEEK_SET);
+        return 1;
+      }
+    }
   }
+}
 
-  int block_number(unsigned char* bits) {
-    return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
+
+int os_rmdir(char* path, bool recursive) {
+
+}
+
+void os_unload(char* orig, char* dest) {
+
+}
+
+void os_load(char* orig) {
+
+}
+
+void print_ls() {
+  for (int i = 0; i < 64; i++) {
+    unsigned char name[29];
+    unsigned char index[3];
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0) {
+      printf("%s\n", name);
+    }
   }
+  fseek(file, 0, SEEK_SET);
+}
 
-  void strip_path(char* path, unsigned char new_path[29], int i) {
-    const char slash = '/';
-    int j = 0;
-    int h = 0;
-    for (int k = 0; k < 29; k++) {
-      if (j < i) {
-        if (path[k] == slash) {
-          j++;
-        }
-        else {
-          new_path[h] = path[k];
-          h++;
-        }
+int is_valid(unsigned char* bits) {
+  return bits[0] >> 6;
+}
+
+int block_number(unsigned char* bits) {
+  return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
+}
+
+void strip_path(char* path, unsigned char new_path[29], int i) {
+  const char slash = '/';
+  int j = 0;
+  int h = 0;
+  for (int k = 0; k < 29; k++) {
+    if (j < i) {
+      if (path[k] == slash) {
+        j++;
       }
       else {
-        new_path[h] = NULL;
+        new_path[h] = path[k];
         h++;
       }
     }
-  }
-
-  int strip_new_path(unsigned char new_path[29]) {
-    int i = 0;
-    while (new_path[i] != NULL) {
-      i++;
-    }
-    return i;
-  }
-
-  void print_bits(unsigned char val)
-  {
-    for (int i = 7; i >= 0; i--) {
-      printf("%c", (val & (1 << i)) ? '1' : '0');
+    else {
+      new_path[h] = NULL;
+      h++;
     }
   }
+}
 
-  int bits_in_char(unsigned char val)
-  {
-    int count = 0;
-    for (int i = 7; i >= 0; --i) {
-      int bit = ((val & (1 << i)) >> i);
-      count += bit;
-    }
-    return count;
+int strip_new_path(unsigned char new_path[29]) {
+  int i = 0;
+  while (new_path[i] != NULL) {
+    i++;
   }
+  return i;
+}
 
-  int update_bitmap() {
-    unsigned char* buffer;
-    buffer = calloc(2048, sizeof(char));
-    int count = 0;
-    for (int j = 1; j < 65; j++) {
-      int number = 2048 * j;
-      fseek(file, number, SEEK_SET);
-      fread(buffer, 2048, 1, file);
-      for (int i = 0; i < 2048; i++) {
-        if (buffer[i] != 0xFF) {
-          printf("agregar desface en byte\n");
-          return count;
-        }
-        count = count + 8;
+void print_bits(unsigned char val)
+{
+  for (int i = 7; i >= 0; i--) {
+    printf("%c", (val & (1 << i)) ? '1' : '0');
+  }
+}
+
+int bits_in_char(unsigned char val)
+{
+  int count = 0;
+  for (int i = 7; i >= 0; --i) {
+    int bit = ((val & (1 << i)) >> i);
+    count += bit;
+  }
+  return count;
+}
+
+int update_bitmap() {
+  unsigned char* buffer;
+  buffer = calloc(2048, sizeof(char));
+  int count = 0;
+  for (int j = 1; j < 65; j++) {
+    int number = 2048 * j;
+    fseek(file, number, SEEK_SET);
+    fread(buffer, 2048, 1, file);
+    for (int i = 0; i < 2048; i++) {
+      if (buffer[i] != 0xFF) {
+        printf("agregar desface en byte\n");
+        return count;
       }
+      count = count + 8;
     }
   }
+}
 
-  void int_to_bytes(unsigned char index[3], int block_number) {
-    index[0] = (block_number >> 16) & 0xFF;
-    index[1] = (block_number >> 8) & 0xFF;
-    index[2] = block_number & 0xFF;
-    index[0] = index[0] + 0x40;
-  }
+void int_to_bytes(unsigned char index[3], int block_number) {
+  index[0] = (block_number >> 16) & 0xFF;
+  index[1] = (block_number >> 8) & 0xFF;
+  index[2] = block_number & 0xFF;
+  index[0] = index[0] + 0x40;
+}

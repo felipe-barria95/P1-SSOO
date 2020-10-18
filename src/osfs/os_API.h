@@ -11,7 +11,6 @@ typedef struct File {
   int n_hardlinks;
   unsigned int direccionamiento[504];//
   int read_buffer;
-  int write_buffer;
 } osFile;
 
 void os_mount(char* diskname);
