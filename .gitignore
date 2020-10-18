@@ -59,6 +59,7 @@ simdiskformat.bin
 .DS_Store
 .AppleDouble
 .LSOverride
+.vscode/
 
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
