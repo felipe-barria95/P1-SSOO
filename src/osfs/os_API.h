@@ -58,3 +58,9 @@ int bits_in_char(unsigned char val);
 int update_bitmap();
 
 void int_to_bytes(unsigned char index[3], int block_number);
+
+void update_byte(unsigned char byte, int pos_zero);
+
+int int_from_byte(unsigned char byte);
+
+void update_byte(unsigned char byte, int pos_zero);

@@ -82,7 +82,7 @@ int os_exists(char* path){
       else if (strchr(path, slash) == NULL){
         int match = strcmp(path, name);
         if (match == 0){
-          
+
           fseek(file, 0, SEEK_SET);
           return 1;
         }
@@ -175,9 +175,9 @@ osFile* os_open(char* path, char mode){
     //OsFile->file = fopen(path, 'r');
     int pos;
     // El siguiente bloque es una copia de os exist para encontrar la ubicación del archivo.
-    OsFile->pos_direct = et_pos(path);// averiguamos la posición del directorio del archivo
+    OsFile->pos_direct = ret_pos(path);// averiguamos la posición del directorio del archivo
     fseek(file, OsFile->pos_direct, SEEK_SET);// llevamos la lectura hasta el bloque de directorio
-    // una vez en el 
+    // una vez en el
     unsigned char index[3];
     fread(index, 3, 1, file);// leemos el número de bloque de el bloque indice
     OsFile->pos_indice = 2048*block_number(index);
@@ -186,10 +186,6 @@ osFile* os_open(char* path, char mode){
     unsigned char hardlinks[1];
     fread(hardlinks, 1, 1, file);// leemos el número de hardlinks
     OsFile->n_hardlinks = (int) hardlinks;
-
-    
-    
-    
     return OsFile;
   }
 
@@ -231,7 +227,7 @@ void os_close(osFile* file_desc){
     if (file_desc->size > 0){
       //Falta chequear si el archivo existe
       uint32_t block_size = 4; //en bytes
-      
+
     }
   }
 
@@ -279,13 +275,12 @@ int os_mkdir(char* path){
         unsigned long position;
         fflush(file);
         position = ftell(file);
-
         int asigned_block = update_bitmap();
         int_to_bytes(index_2, asigned_block);
         //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
         fseek(file, position, SEEK_SET);
         fwrite(index_2, 3, 1, file);
-
+        fwrite(new_path, 3, 1, file);
         fseek(file, 0, SEEK_SET);
         return 1;
       }
@@ -384,11 +379,15 @@ int update_bitmap(){
     for (int i = 0; i < 2048; i++){
       if (buffer[i] != 0xFF){
         printf("agregar desface en byte\n");
+        int pos_zero = int_from_byte(buffer[i]);
+        update_byte(buffer[i], pos_zero);
+        count = count + pos_zero;
         return count;
       }
       count = count + 8;
     }
   }
+  free(buffer);
 }
 
 void int_to_bytes(unsigned char index[3], int block_number){
@@ -396,4 +395,42 @@ void int_to_bytes(unsigned char index[3], int block_number){
   index[1] = (block_number >> 8) & 0xFF;
   index[2] = block_number & 0xFF;
   index[0] = index[0] + 0x40;
+}
+
+int int_from_byte(unsigned char byte){
+  for (int i = 7; i >= 0; --i){
+    int bit = ((byte & (1 << i)) >> i);
+    if (bit == 0){
+      return i;
+    }
+  }
+}
+
+void update_byte(unsigned char byte, int pos_zero){
+  if (pos_zero == 7){
+    byte = byte + 0x80;
+  }
+  else if (pos_zero == 6){
+    byte = byte + 0x40;
+  }
+  else if (pos_zero == 5){
+    byte = byte + 0x20;
+  }
+  else if (pos_zero == 4){
+    byte = byte + 0x10;
+  }
+  else if (pos_zero == 3){
+    byte = byte + 0x08;
+  }
+  else if (pos_zero == 2){
+    byte = byte + 0x04;
+  }
+  else if (pos_zero == 1){
+    byte = byte + 0x02;
+  }
+  else if (pos_zero == 0){
+    byte = byte + 0x01;
+  }
+  fseek(file, -1, SEEK_CUR);
+  fwrite(byte, 1, 1, file);
 }
