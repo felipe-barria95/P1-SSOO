@@ -6,7 +6,6 @@
 
 void os_mount(char* diskname) {
   file = fopen(diskname, "rb+");
-  printf("file2: %p", file);
 }
 
 void os_bitmap(unsigned num, bool hex){ //FALTA imprimir en stderr//
@@ -100,11 +99,6 @@ void os_ls(char* path){
   index = calloc(3, sizeof(char));
   name = calloc(29, sizeof(char));
   for (int i = 0; i < 64; i++){
-    printf("file2: %p", file);
-    printf("hola2\n");
-    int posicion = ftell(file);
-    printf("Ftell: %i\n", posicion);
-    printf("hola\n");
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0){ //si llegamos al directorio destino o si estamos en directorio raiz//
@@ -392,16 +386,11 @@ int update_bitmap(){
     fread(buffer, 2048, 1, file);
     for (int i = 0; i < 2048; i++){
       if (buffer[i] != 0xFF){
-        unsigned char buffer_update;
-        printf("Byte ejecucion: %X\n", buffer[i]);
+        unsigned char buffer_update[0];
         int pos_zero = int_from_byte(buffer[i]);
-        buffer_update = update_byte(buffer[i], pos_zero);
-        printf("num: %i\n", number+i-1);
-        printf("Byte 10: %X\n", buffer_update);
-        fseek(file, number+i-1, SEEK_SET);
-        int numecscs = ftell(file);
-        printf("nuem: %i\n", numecscs);
-        fwrite(0x4D, 1, 1, file);
+        buffer_update[0] = update_byte(buffer[i], pos_zero);
+        fseek(file, number+i, SEEK_SET);
+        fwrite(buffer_update, 1, 1, file);
         count = count + pos_zero;
         return count;
       }
@@ -429,7 +418,6 @@ int int_from_byte(unsigned char byte){
 
 unsigned char update_byte(unsigned char byte, int pos_zero){
   unsigned char byte_2 = "\0";
-  printf("Byte 1: %X\n", byte);
   if (pos_zero == 0){
     byte_2 = byte | 0x80;
   }
@@ -454,6 +442,5 @@ unsigned char update_byte(unsigned char byte, int pos_zero){
   else{
     byte_2 = byte | 0x01;
   }
-  printf("Byte 2: %X\n", byte);
   return byte_2;
 }
