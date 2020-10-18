@@ -262,6 +262,9 @@ osFile *os_open(char *path, char mode)
     //vamos al primer puntero a bloque de direccionamiento siemple
     unsigned char dir_simp[4];
     fread(dir_simp, 4, 1, file);
+
+    fseek(file, 0, SEEK_SET);
+    return OsFile;
   }
 
   // Si es 'w' y el archivo no existe
