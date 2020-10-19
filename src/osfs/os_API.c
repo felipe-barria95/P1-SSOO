@@ -523,56 +523,18 @@ int os_hardlink(char* orig, char* dest)
 
 int os_mkdir(char* path)
 {
-  int count = 0;
-  const char slash = '/';
-  unsigned char new_path[29];
-  path = path + 1;
-  strip_path(path, new_path, 1);
-  if (strchr(path, slash) != NULL)
-  { //si no llegamos ¡al directorio destino o si estamos en directorio raiz//
-    for (int i = 0; i < 64; i++)
-    {
-      unsigned char index[3];
-      unsigned char name[29];
-      fread(index, 3, 1, file);
-      fread(name, 29, 1, file);
-      if (is_valid(index) > 0)
-      {
-        int match = strcmp(new_path, name);
-        if (match == 0)
-        {
-          path = path + strip_new_path(new_path);
-          int disk_number = 2048 * block_number(index);
-          fseek(file, disk_number, SEEK_SET);
-          return os_mkdir(path);
-        }
-      }
+  if (os_exists(path) == 0){
+    if (os_exists_path_before(path) == 1){
+      return os_mkdir_recursive(path);
+    }
+    else{
+      printf("La direccion anterior no existe.\n");
+      return 0;
     }
   }
-  else
-  {
-    unsigned char index_2[3];
-    unsigned char name_2[29];
-    for (int j = 0; j < 64; j++)
-    {
-      fread(index_2, 3, 1, file);
-      fread(name_2, 29, 1, file);
-      if (is_valid(index_2) == 0)
-      {
-        unsigned long position;
-        fflush(file);
-        position = ftell(file) - 32;
-        int asigned_block = update_bitmap();
-        int_to_bytes(index_2, asigned_block);
-        printf("%X %X %X\n", index_2[0], index_2[1], index_2[2]);
-        //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
-        fseek(file, position, SEEK_SET);
-        fwrite(index_2, 3, 1, file);
-        fwrite(new_path, 29, 1, file);
-        fseek(file, 0, SEEK_SET);
-        return 1;
-      }
-    }
+  else{
+    printf("La direccion que se quiere crear ya existe.\n");
+    return 0;
   }
 }
 
@@ -1013,4 +975,64 @@ void os_ls_recursive(char* path){
   }
   printf("==================================\n");
   fseek(file, 0, SEEK_SET);
+}
+
+int os_mkdir_recursive(char* path){
+  int count = 0;
+  const char slash = '/';
+  unsigned char new_path[29];
+  path = path + 1;
+  strip_path(path, new_path, 1);
+  if (strchr(path, slash) != NULL)
+  { //si no llegamos ¡al directorio destino o si estamos en directorio raiz//
+    for (int i = 0; i < 64; i++)
+    {
+      unsigned char index[3];
+      unsigned char name[29];
+      fread(index, 3, 1, file);
+      fread(name, 29, 1, file);
+      if (is_valid(index) > 0)
+      {
+        int match = strcmp(new_path, name);
+        if (match == 0)
+        {
+          path = path + strip_new_path(new_path);
+          int disk_number = 2048 * block_number(index);
+          fseek(file, disk_number, SEEK_SET);
+          return os_mkdir_recursive(path);
+        }
+      }
+    }
+  }
+  else
+  {
+    unsigned char index_2[3];
+    unsigned char name_2[29];
+    for (int j = 0; j < 64; j++)
+    {
+      fread(index_2, 3, 1, file);
+      fread(name_2, 29, 1, file);
+      if (is_valid(index_2) == 0)
+      {
+        unsigned long position;
+        fflush(file);
+        position = ftell(file) - 32;
+        int asigned_block = update_bitmap();
+        int_to_bytes(index_2, asigned_block);
+        printf("%X %X %X\n", index_2[0], index_2[1], index_2[2]);
+        //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
+        fseek(file, position, SEEK_SET);
+        fwrite(index_2, 3, 1, file);
+        fwrite(new_path, 29, 1, file);
+        fseek(file, 0, SEEK_SET);
+        return 1;
+      }
+    }
+    printf("La carpeta esta llena.\n");
+    return 0;
+  }
+}
+
+int os_exists_path_before(char* path){
+  return 1;
 }

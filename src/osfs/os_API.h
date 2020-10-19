@@ -85,3 +85,7 @@ void rm_recursive();
 void rm_file_mem_dir(int mem_dir);
 
 void os_ls_recursive(char* path);
+
+int os_mkdir_recursive(char* path);
+
+int os_exists_path_before(char* path);
