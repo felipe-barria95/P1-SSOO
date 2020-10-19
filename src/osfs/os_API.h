@@ -71,3 +71,11 @@ void int_to_bytes(unsigned char index[3], int block_number);
 void os_desmontar();
 
 unsigned char *get_folder_path(char *path, unsigned char new_path[29]);
+
+long **get_and_fill_empt_block(int cantidad);
+
+int int_from_byte(unsigned char byte);
+
+int update_bitmap();
+
+unsigned char update_byte(unsigned char byte, int pos_zero);

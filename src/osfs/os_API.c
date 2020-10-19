@@ -7,7 +7,7 @@
 
 void os_mount(char *diskname)
 {
-  file = fopen(diskname, "r");
+  file = fopen(diskname, "rb+");
 }
 
 void os_bitmap(unsigned num, bool hex)
@@ -85,7 +85,6 @@ int os_exists(char *path)
   }
   for (int i = 0; i < 64; i++)
   {
-    printf("##\n");
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
     if (is_valid(index) > 0)
@@ -273,12 +272,88 @@ osFile *os_open(char *path, char mode)
     //memcpy(new_path, get_folder_path(path), 29);
     printf("## logramos copiar el path?: %s\n", folder_path);
     fseek(file, 0, SEEK_SET);
-    printf("###\n");
-    os_exists(folder_path);
-    //printf("## existe la carpeta? %s\n", os_exists(folder_path));
     if (os_exists(folder_path))
     {
-      printf("## entramos, quiere decir que si existe la carpeta\n");
+      if (!os_exists(path))
+      {
+        // encontrar 3 bloques desocupados
+        int posicion_vacia1;
+        int posicion_vacia2;
+        int posicion_vacia3;
+        posicion_vacia1 = update_bitmap() * 2048;
+        printf("## posicon vacia: %i\n", posicion_vacia1);
+        posicion_vacia2 = update_bitmap() * 2048;
+        printf("## posicon vacia: %i\n", posicion_vacia2);
+        posicion_vacia3 = update_bitmap() * 2048;
+        printf("## posicon vacia: %i\n", posicion_vacia3);
+
+        int pos_folder;
+        pos_folder = ret_pos(folder_path);
+        fseek(file, pos_folder, SEEK_SET);
+        unsigned char name[29];
+        unsigned char index[3];
+        for (int i = 0; i < 64; i++)
+        {
+          fread(index, 3, 1, file);
+          fread(name, 29, 1, file);
+          if (is_valid(index) == 0)
+          {
+            fseek(file, pos_folder + 32 * (i - 1), SEEK_SET);
+            unsigned char index_1[3];
+            int uno = 1;
+            index_1[0] = uno << 6;
+            index_1[1] = posicion_vacia1 >> 8;
+            index_1[3] = posicion_vacia1;
+            //printf("## es vacio?: %i\n", is_valid(index_1));
+            fwrite(index_1, 3, 1, file);
+            unsigned char name[29];
+            name[0] = "notfile.txt";
+            name[1] = 'n';
+            name[2] = 'o';
+            name[3] = 't';
+            name[4] = 'f';
+            name[5] = 'i';
+            name[6] = 'l';
+            name[7] = 'e';
+            name[8] = '.';
+            name[9] = 't';
+            name[10] = 'x';
+            name[11] = 't';
+            fwrite(name, 29, 1, file);
+            printf("## posicion del indice: %i\n", posicion_vacia1);
+            fseek(file, posicion_vacia1, SEEK_SET);
+            // ahora en el bloque indice
+            unsigned char hardlinks[1];
+            hardlinks[0] = 1;
+            fwrite(hardlinks, 1, 1, file);
+            unsigned char size[7];
+            size[0] = 0;
+            size[1] = 0;
+            size[2] = 0;
+            size[3] = 0;
+            size[4] = 0;
+            size[5] = 0;
+            size[6] = 0;
+            fwrite(size, 7, 1, file);
+            unsigned char puntero_BDS[4];
+            puntero_BDS[0] = posicion_vacia2 >> 24;
+            puntero_BDS[1] = posicion_vacia2 >> 16;
+            puntero_BDS[2] = posicion_vacia2 >> 8;
+            puntero_BDS[3] = posicion_vacia2;
+            fwrite(puntero_BDS, 4, 1, file);
+            fseek(file, posicion_vacia2, SEEK_SET); // nos movemos al bloque indice
+            // un vez en el bloque induce
+            unsigned char puntero_DATA[4];
+            puntero_DATA[0] = posicion_vacia3 >> 24;
+            puntero_DATA[1] = posicion_vacia3 >> 16;
+            puntero_DATA[2] = posicion_vacia3 >> 8;
+            puntero_DATA[3] = posicion_vacia3;
+            fwrite(puntero_DATA, 4, 1, file);
+            fseek(file, posicion_vacia3, SEEK_SET); // nos movemos al bloque DATA
+            return OsFile;
+          }
+        }
+      }
     }
 
     //fseek(file, 0, SEEK_SET);
@@ -293,6 +368,89 @@ osFile *os_open(char *path, char mode)
     printf("ERROR No se pudo abrir el archivo\n");
     free(OsFile);
     return NULL;
+  }
+}
+
+unsigned char update_byte(unsigned char byte, int pos_zero)
+{
+  unsigned char byte_2 = "\0";
+  if (pos_zero == 0)
+  {
+    byte_2 = byte | 0x80;
+  }
+  else if (pos_zero == 1)
+  {
+    byte_2 = byte | 0x40;
+  }
+  else if (pos_zero == 2)
+  {
+    byte_2 = byte | 0x20;
+  }
+  else if (pos_zero == 3)
+  {
+    byte_2 = byte | 0x10;
+  }
+  else if (pos_zero == 4)
+  {
+    byte_2 = byte | 0x08;
+  }
+  else if (pos_zero == 5)
+  {
+    byte_2 = byte | 0x04;
+  }
+  else if (pos_zero == 6)
+  {
+    byte_2 = byte | 0x02;
+  }
+  else
+  {
+    byte_2 = byte | 0x01;
+  }
+  return byte_2;
+}
+
+/*
+int **get_and_fill_empt_block(int cantidad)
+{
+  //int arg_pos[cantidad];
+  unsigned char bytemap[2048];
+  int bitmap;
+  //int contador;
+  int empty_pos;
+  //int contador = 0;
+  fseek(file, 2048, SEEK_SET);
+  for (int i = 0; i < 64; i++)
+  {
+    fread(bytemap, 2048, 1, file);
+    for (int j = 0; j < 2048; j++)
+    {
+      if (bytemap[j] != 0xFF)
+      {
+        bitmap = int_from_byte(bytemap[j]);
+        empty_pos = i * 2048 * 8 + j * 8 + bitmap;
+        return empty_pos * 2048;
+        update_bitmap
+        //arg_pos[contador] = empty_pos * 2048;
+        //contador++;
+        
+        if (contador == cantidad)
+        {
+          return &arg_pos;
+        }
+      }
+    }
+  }
+}
+*/
+int int_from_byte(unsigned char byte)
+{
+  for (int i = 7; i >= 0; --i)
+  {
+    int bit = ((byte & (1 << i)) >> i);
+    if (bit == 0)
+    {
+      return 7 - i;
+    }
   }
 }
 
@@ -387,13 +545,6 @@ int os_write(osFile *file_desc, void *buffer, int nbytes)
 
 void os_close(osFile *file_desc)
 {
-  if (file_desc->mode == 'w')
-  {
-    if (file_desc->size > 0)
-    {
-      printf("");
-    }
-  }
   free(file_desc);
 }
 
@@ -444,7 +595,7 @@ int os_mkdir(char *path)
       if (is_valid(index_2) == 0)
       {
         fseek(file, -32, SEEK_SET);
-        unsigned long position;
+        unsigned int position;
         fflush(file);
         position = ftell(file);
 
@@ -619,12 +770,18 @@ int update_bitmap()
     {
       if (buffer[i] != 0xFF)
       {
-        printf("agregar desface en byte\n");
+        unsigned char buffer_update[0];
+        int pos_zero = int_from_byte(buffer[i]);
+        buffer_update[0] = update_byte(buffer[i], pos_zero);
+        fseek(file, number + i, SEEK_SET);
+        fwrite(buffer_update, 1, 1, file);
+        count = count + pos_zero;
         return count;
       }
       count = count + 8;
     }
   }
+  free(buffer);
 }
 
 void int_to_bytes(unsigned char index[3], int block_number)
