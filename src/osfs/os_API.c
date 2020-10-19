@@ -1020,3 +1020,8 @@ void rm_file_mem_dir(int mem_dir) {
   }
   free(pointers_ref);
 }
+
+void os_desmontar()
+{
+  fclose(file);
+}
