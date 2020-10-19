@@ -471,48 +471,13 @@ void os_close(osFile* file_desc)
 
 void os_rm(char* path)
 {
-  const char slash = '/';
-  unsigned char name[29];
-  unsigned char index[3];
-  unsigned char new_path[29];
-  path = path + 1;
-  for (int i = 0; i < 64; i++)
-  {
-    fread(index, 3, 1, file);
-    fread(name, 29, 1, file);
-    if (is_valid(index) > 0)
-    {
-      if (strchr(path, slash) != NULL)
-      {
-        strip_path(path, new_path, 1);
-        int match = strcmp(new_path, name);
-        if (match == 0)
-        {
-          path = path + strip_new_path(new_path); //obtengo nuevo path, eliminando la carpeta que ya accedi//
-          int disk_number = 2048 * block_number(index);
-          fseek(file, disk_number, SEEK_SET);
-          return os_rm(path);
-        }
-      }
-      else if (strchr(path, slash) == NULL)
-      {
-        int match = strcmp(path, name);
-        if (match == 0)
-        {
-          unsigned long position;
-          fflush(file);
-          position = ftell(file) - 32;
-          rm_file_mem_dir(block_number(index));
-          fseek(file, position, SEEK_SET);
-          unsigned char zero[0];
-          zero[0] = NULL;
-          fwrite(zero, 1, 32, file);
-          fseek(file, 0, SEEK_SET);
-          break;
-        }
-      }
-    }
+  if (os_exists(path) == 0){
+    printf("La direccion ingresada no existe.\n");
   }
+  else{
+    os_rm_recursive(path);
+  }
+
 }
 
 int os_hardlink(char* orig, char* dest)
@@ -1052,4 +1017,55 @@ int os_exists_path_before(char* path){
   int result = os_exists(new_pointer);
   free(new_pointer);
   return result;
+}
+
+void os_rm_recursive(char* path){
+  const char slash = '/';
+  unsigned char name[29];
+  unsigned char index[3];
+  unsigned char new_path[29];
+  path = path + 1;
+  for (int i = 0; i < 64; i++)
+  {
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0)
+    {
+      if (strchr(path, slash) != NULL)
+      {
+        strip_path(path, new_path, 1);
+        int match = strcmp(new_path, name);
+        if (match == 0)
+        {
+          path = path + strip_new_path(new_path); //obtengo nuevo path, eliminando la carpeta que ya accedi//
+          int disk_number = 2048 * block_number(index);
+          fseek(file, disk_number, SEEK_SET);
+          return os_rm_recursive(path);
+        }
+      }
+      else if (strchr(path, slash) == NULL)
+      {
+        int match = strcmp(path, name);
+        if (match == 0)
+        {
+          if (is_valid(index) == 1){
+            unsigned long position;
+            fflush(file);
+            position = ftell(file) - 32;
+            rm_file_mem_dir(block_number(index));
+            fseek(file, position, SEEK_SET);
+            unsigned char zero[0];
+            zero[0] = NULL;
+            fwrite(zero, 1, 32, file);
+            fseek(file, 0, SEEK_SET);
+            break;
+          }
+          else if (is_valid(index) == 2){
+            printf("Se debe ingresar la direccion hacia un archivo.\n");
+            break;
+          }
+        }
+      }
+    }
+  }
 }
