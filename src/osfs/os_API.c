@@ -400,12 +400,14 @@ int **get_and_fill_empt_block(int cantidad)
 }
 */
 
-int os_read(osFile* file_desc, void* buffer, int nbytes)
-{
-  // Esta funcion deviera funcionar solo si el archivo está abierto y existe el buffer
-  // retorna la cantidad de byts leidos
-  if (file_desc->mode == 'r')
-  {
+int os_read(osFile* file_desc, void* buffer, int nbytes) {
+  int read = -8;
+  int bloques = ceil(nbytes / (float)2048);
+  if (file_desc->mode == 'r') {
+    if (file_desc->read_buffer == file_desc->size) {
+      fprintf(stderr, "Error: No bytes will be read");
+      return 0;
+    }
     fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
     unsigned char next_BDS[4];
     fread(next_BDS, 4, 1, file);
@@ -419,12 +421,21 @@ int os_read(osFile* file_desc, void* buffer, int nbytes)
     fseek(file, aux_DATA, SEEK_SET);
     char DATA_1[2048];
     fread(DATA_1, 2048, 1, file);
+    read = nbytes;
+    if ((file_desc->read_buffer + nbytes) >= file_desc->size)
+      read = file_desc->size - file_desc->read_buffer;
+    char* src = malloc(nbytes + 1);
+    memcpy(src, DATA_1 + file_desc->read_buffer, read);
+    src[read] = '\0';
+    memcpy(buffer, src, read);
+    file_desc->read_buffer += read;
+    return read;
   }
-  else
-  {
-    printf("ERROR, este archivo no está en modo lectura\n");
+  else {
+    fprintf(stderr, "Custom error: Incorrect mode");
+    return  -1;
   }
-}
+};
 
 int os_write(osFile* file_desc, void* buffer, int nbytes)
 {
@@ -466,7 +477,7 @@ int os_write(osFile* file_desc, void* buffer, int nbytes)
         char* src = malloc(nbytes + 1);
         memcpy(src, buffer, nbytes);
         src[nbytes] = '\0';
-        memcpy(file_desc->data, src, nbytes);
+        memcpy(DATA_1, src, nbytes);
         free(src);
         return nbytes;
       }
@@ -477,6 +488,7 @@ int os_write(osFile* file_desc, void* buffer, int nbytes)
         memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048 - 1);
         file_desc->write_buffer += free_blocks * 2048;
         src[free_blocks * 2048] = '\0';
+        memcpy(DATA_1, src, resto_bloque_data);
         free(src);
         count += os_write(file_desc, buffer, nbytes);
         return count;

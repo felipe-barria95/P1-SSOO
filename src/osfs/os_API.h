@@ -8,6 +8,7 @@ typedef struct File
   unsigned int pos_direct; // posición del bloque directorio
   unsigned int pos_indice; // posición del bloque indice
   int write_buffer;
+  int read_buffer;
   int remaining_block;
   unsigned long int size;               // tamaño del archivo
   int n_hardlinks;                      // número de hardlinks
