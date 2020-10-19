@@ -217,6 +217,7 @@ osFile* os_open(char* path, char mode)
   printf("puntero al osFile %p\n", OsFile);
   printf("modo: %c\n", OsFile->mode);
   OsFile->pos_direct = 0;
+  OsFile->read_buffer = 0;
   printf("abriendo acrhivo: %s\n", path);
   printf("existe? %i\n", os_exists(path));
   // Si es 'r' y el archivo existe
@@ -401,34 +402,59 @@ int **get_and_fill_empt_block(int cantidad)
 */
 
 int os_read(osFile* file_desc, void* buffer, int nbytes) {
-  int read = -8;
-  int bloques = ceil(nbytes / (float)2048);
+  //int bloques = ceil(nbytes / (float)2048);
   if (file_desc->mode == 'r') {
     if (file_desc->read_buffer == file_desc->size) {
       fprintf(stderr, "Error: No bytes will be read");
       return 0;
     }
-    fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
-    unsigned char next_BDS[4];
-    fread(next_BDS, 4, 1, file);
-    int aux_bds;
-    aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
-    fseek(file, aux_bds, SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
-    unsigned char next_DATA[4];
-    fread(next_DATA, 4, 1, file);
-    int aux_DATA;
-    aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
-    fseek(file, aux_DATA, SEEK_SET);
-    char DATA_1[2048];
-    fread(DATA_1, 2048, 1, file);
-    read = nbytes;
+    int read = nbytes;
     if ((file_desc->read_buffer + nbytes) >= file_desc->size)
       read = file_desc->size - file_desc->read_buffer;
-    char* src = malloc(nbytes + 1);
-    memcpy(src, DATA_1 + file_desc->read_buffer, read);
+    int read_block = read;
+    int pending_read = read;
+    long int aux_bds;
+    int aux_DATA;
+    unsigned char next_BDS[4];
+    unsigned char next_DATA[4];
+    //fread(buffer, read, 1, file);
+    /* READ = 200
+       RESTO = 100 */
+    long int sum_bds = 0;
+    int contador = 0;
+    long int sum_index = 0;
+    char* src = malloc(read);
+    while (pending_read > 0) { // 200 -> 100
+      fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
+      //printf("POS INDICE: %i\n", file_desc->pos_indice + 8 + sum_index);
+      fread(next_BDS, 4, 1, file);
+      aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
+      //printf("AUX BDS: %i\n", aux_bds);
+      fseek(file, (long int)(aux_bds + sum_bds), SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
+      fread(next_DATA, 4, 1, file);
+      aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
+      //printf("next_DATA: %s\n", next_DATA);
+      //printf("AUX DATA: %i\n", aux_DATA);
+      fseek(file, (long int)aux_DATA, SEEK_SET);
+      if (pending_read > file_desc->resto_bloque_data) { // 200 > 100? -> 100 > 100?
+        read_block = file_desc->resto_bloque_data; // 100
+      }
+      fread(src, read_block, 1, file); // SE LEEN 100
+      //printf("READ: %i\n", read);
+      //printf("READ BLOCK: %i\n", read_block);
+      //printf("SRC: %c\n", src[0]);
+      pending_read -= read_block; // 100
+      sum_bds += 4;
+      contador++;
+      if (contador == file_desc->resto_BDS) {
+        contador = 0;
+        sum_index += 4;
+      }
+    }
+    file_desc->read_buffer += read;
     src[read] = '\0';
     memcpy(buffer, src, read);
-    file_desc->read_buffer += read;
+    free(src);
     return read;
   }
   else {
@@ -437,71 +463,131 @@ int os_read(osFile* file_desc, void* buffer, int nbytes) {
   }
 };
 
-int os_write(osFile* file_desc, void* buffer, int nbytes)
-{
-  unsigned char* aux_buffer;
-  aux_buffer = calloc(2048, sizeof(char));
-  int count = 0;
-  for (int j = 1; j < 65; j++)
-  {
-    int number = 2048 * j;
-    fseek(file, number, SEEK_SET);
-    fread(aux_buffer, 2048, 1, file);
-    for (int i = 0; i < 2048; i++)
-      count += bits_in_char(aux_buffer[i]);
-  }
-  free(aux_buffer);
-  fseek(file, 0, SEEK_SET);
-  int free_blocks = 1048576 - count; // CANTIDAD DE BLOQUES DISPONIBLES
-  float temp_blocks = (float)nbytes / 2048;
-  int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE SE NECESITAN
-  if (file_desc->mode == 'w')
-  {
-    fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
-    unsigned char next_BDS[4];
-    fread(next_BDS, 4, 1, file);
-    int aux_bds;
-    aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
-    fseek(file, aux_bds, SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
-    unsigned char next_DATA[4];
-    fread(next_DATA, 4, 1, file);
-    int aux_DATA;
-    aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
-    fseek(file, aux_DATA, SEEK_SET);
-    char DATA_1[2048];
-    fread(DATA_1, 2048, 1, file);
-    if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ALCANZA PARA ESCRIBIR
-    {
-      if (nbytes <= file_desc->resto_bloque_data)
-      { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
-        char* src = malloc(nbytes + 1);
-        memcpy(src, buffer, nbytes);
-        src[nbytes] = '\0';
-        memcpy(DATA_1, src, nbytes);
-        free(src);
-        return nbytes;
-      }
-      else
-      { // SI SE NECESITA ESCRIBIR RECURSIVAMENTE EN MÁS BLOQUES
-        int count = 0;
-        char* src = malloc(file_desc->resto_bloque_data + 1);
-        memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048 - 1);
-        file_desc->write_buffer += free_blocks * 2048;
-        src[free_blocks * 2048] = '\0';
-        memcpy(DATA_1, src, resto_bloque_data);
-        free(src);
-        count += os_write(file_desc, buffer, nbytes);
-        return count;
-      }
-    }
-    else
-    { // SI NO ME ALCANZA, NO SE ESCRIBE
-      fprintf(stderr, "Error: No space available\n");
+int os_write(osFile* file_desc, void* buffer, int nbytes) {
+  //int bloques = ceil(nbytes / (float)2048);
+  if (file_desc->mode == 'w') {
+    if (file_desc->write_buffer == file_desc->size) {
+      fprintf(stderr, "Error: No bytes will be written");
       return 0;
     }
+    int write = nbytes;
+    if ((file_desc->write_buffer + nbytes) >= file_desc->size)
+      write = file_desc->size - file_desc->write_buffer;
+    int write_block = write;
+    int pending_write = write;
+    long int aux_bds;
+    int aux_DATA;
+    unsigned char next_BDS[4];
+    unsigned char next_DATA[4];
+    //fread(buffer, write, 1, file);
+    long int sum_bds = 0;
+    int contador = 0;
+    long int sum_index = 0;
+    char* src = malloc(write);
+    while (pending_write > 0) {
+      fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
+      //printf("POS INDICE: %i\n", file_desc->pos_indice + 8 + sum_index);
+      fread(next_BDS, 4, 1, file);
+      aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
+      //printf("AUX BDS: %i\n", aux_bds);
+      fseek(file, (long int)(aux_bds + sum_bds), SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
+      fread(next_DATA, 4, 1, file);
+      aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
+      //printf("next_DATA: %s\n", next_DATA);
+      //printf("AUX DATA: %i\n", aux_DATA);
+      fseek(file, (long int)aux_DATA, SEEK_SET);
+      if (pending_write > file_desc->resto_bloque_data) {
+        write_block = file_desc->resto_bloque_data;
+      }
+      fread(src, write_block, 1, file);
+      //printf("READ: %i\n", write);
+      //printf("READ BLOCK: %i\n", write_block);
+      //printf("SRC: %c\n", src[0]);
+      pending_write -= write_block;
+      sum_bds += 4;
+      contador++;
+      if (contador == file_desc->resto_BDS) {
+        contador = 0;
+        sum_index += 4;
+      }
+    }
+    file_desc->write_buffer += write;
+    src[write] = '\0';
+    memcpy(src, buffer, write);
+    free(src);
+    return write;
   }
-  return 0;
-}
+  else {
+    fprintf(stderr, "Custom error: Incorrect mode");
+    return  -1;
+  }
+};
+
+//int os_write(osFile* file_desc, void* buffer, int nbytes)
+//{
+//  unsigned char* aux_buffer;
+//  aux_buffer = calloc(2048, sizeof(char));
+//  int count = 0;
+//  for (int j = 1; j < 65; j++)
+//  {
+//    int number = 2048 * j;
+//    fseek(file, number, SEEK_SET);
+//    fread(aux_buffer, 2048, 1, file);
+//    for (int i = 0; i < 2048; i++)
+//      count += bits_in_char(aux_buffer[i]);
+//  }
+//  free(aux_buffer);
+//  fseek(file, 0, SEEK_SET);
+//  int free_blocks = 1048576 - count; // CANTIDAD DE BLOQUES DISPONIBLES
+//  float temp_blocks = (float)nbytes / 2048;
+//  int blocks = ceil(temp_blocks) + 1; // CANTIDAD DE BLOQUES QUE SE NECESITAN
+//  if (file_desc->mode == 'w')
+//  {
+//    fseek(file, file_desc->pos_indice + 8, SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
+//    unsigned char next_BDS[4];
+//    fread(next_BDS, 4, 1, file);
+//    int aux_bds;
+//    aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
+//    fseek(file, aux_bds, SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
+//    unsigned char next_DATA[4];
+//    fread(next_DATA, 4, 1, file);
+//    int aux_DATA;
+//    aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
+//    fseek(file, aux_DATA, SEEK_SET);
+//    char DATA_1[2048];
+//    fread(DATA_1, 2048, 1, file);
+//    if (free_blocks >= blocks) // SI LA CANTIDAD DE BLOQUES DISPONIBLES ALCANZA PARA ESCRIBIR
+//    {
+//      if (nbytes <= file_desc->resto_bloque_data)
+//      { // SI SE ALCANZA A ESCRIBIR EN UN BLOQUE
+//        char* src = malloc(nbytes + 1);
+//        memcpy(src, buffer, nbytes);
+//        src[nbytes] = '\0';
+//        memcpy(DATA_1, src, nbytes);
+//        free(src);
+//        return nbytes;
+//      }
+//      else
+//      { // SI SE NECESITA ESCRIBIR RECURSIVAMENTE EN MÁS BLOQUES
+//        int count = 0;
+//        char* src = malloc(file_desc->resto_bloque_data + 1);
+//        memcpy(src, buffer + file_desc->write_buffer, free_blocks * 2048 - 1);
+//        file_desc->write_buffer += free_blocks * 2048;
+//        src[free_blocks * 2048] = '\0';
+//        memcpy(DATA_1, src, file_desc->resto_bloque_data);
+//        free(src);
+//        count += os_write(file_desc, buffer, nbytes);
+//        return count;
+//      }
+//    }
+//    else
+//    { // SI NO ME ALCANZA, NO SE ESCRIBE
+//      fprintf(stderr, "Error: No space available\n");
+//      return 0;
+//    }
+//  }
+//  return 0;
+//}
 
 void os_close(osFile* file_desc)
 {
