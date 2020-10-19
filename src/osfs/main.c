@@ -35,6 +35,8 @@ int main(int argc, char** argv)
   os_rmdir("/folder", true);
   os_ls("/folder");
   os_ls("/");
+  printf("Mkdir: %i\n", os_mkdir("/memes/g bfgdsfgdsf777"));
+  os_bitmap(1, true);
   //os_bitmap(1, true);
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
   //os_bitmap(1, true);
