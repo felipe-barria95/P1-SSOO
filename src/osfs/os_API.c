@@ -395,6 +395,50 @@ void os_close(osFile* file_desc)
 
 void os_rm(char* path)
 {
+  const char slash = '/';
+  unsigned char name[29];
+  unsigned char index[3];
+  unsigned char new_path[29];
+  path = path + 1;
+  for (int i = 0; i < 64; i++)
+  {
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0)
+    {
+      if (strchr(path, slash) != NULL)
+      {
+        strip_path(path, new_path, 1);
+        int match = strcmp(new_path, name);
+        if (match == 0)
+        {
+          path = path + strip_new_path(new_path); //obtengo nuevo path, eliminando la carpeta que ya accedi//
+          int disk_number = 2048 * block_number(index);
+          fseek(file, disk_number, SEEK_SET);
+          return os_rm(path);
+        }
+      }
+      else if (strchr(path, slash) == NULL)
+      {
+        printf("Path1 rm: %s\n", name);
+        printf("Path2 rm: %s\n", path);
+        int match = strcmp(path, name);
+        if (match == 0)
+        {
+          printf("path: %s\n", path);
+          unsigned long position;
+          fflush(file);
+          position = ftell(file) - 32;
+          fseek(file, position, SEEK_SET);
+          unsigned char zero[0];
+          zero[0] = NULL;
+          fwrite(zero, 1, 32, file);
+          fseek(file, 0, SEEK_SET);
+          break;
+        }
+      }
+    }
+  }
 }
 
 int os_hardlink(char* orig, char* dest)
@@ -833,7 +877,8 @@ void rm_recursive(int mem_dir) {
     }
     if (is_valid(index) == 1) {
       printf("Arcivho\n");
-      //remove_file//
+      rm_file_mem_dir(block_number(index));
+      update_remove_bitmap(mem_dir / 2048);
       fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
       unsigned char zero[0];
       zero[0] = NULL;
@@ -854,3 +899,16 @@ void rm_recursive(int mem_dir) {
   update_remove_bitmap(mem_dir / 2048);
 }
 
+void rm_file_mem_dir(int mem_dir){
+  unsigned char hardlinks[0];
+  unsigned char file_size[7];
+  unsigned char *pointers_ref;
+  pointers_ref = calloc(2036, sizeof(char));
+  unsigned char index_block[4];
+  fread(hardlinks, 1, 1, file);
+  fread(file_size, 7, 1, file);
+  fread(pointers_ref, 2036, 1, file);
+  fread(index_block, 4, 1, file);
+  free(pointers_ref);
+
+}

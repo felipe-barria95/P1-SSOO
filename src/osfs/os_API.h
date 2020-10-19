@@ -81,3 +81,5 @@ void update_remove_bitmap(int index);
 unsigned char obtain_new_buffer(unsigned char byte, int pos_zero);
 
 void rm_recursive();
+
+void rm_file_mem_dir(int mem_dir);

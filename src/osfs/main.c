@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv)
 {
-  os_mount("./disk_files/simdiskfilled.bin");
+  os_mount(argv[1]);
   //os_ls("/folder/god/");
   ///os_bitmap(1, true);
   printf("EXISTE?: %i\n", os_exists("/folder/napkin.txt"));
@@ -41,6 +41,11 @@ int main(int argc, char** argv)
   printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
   os_ls("/folder");
   os_ls("/");
+  os_ls("/memes");
+  os_rm("/memes/generic (1).jpg");
+  os_ls("/memes");
+  os_ls("/");
+  os_ls("/memes");
   fclose(file);
   return 0;
 }
