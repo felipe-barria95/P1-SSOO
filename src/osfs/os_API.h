@@ -89,3 +89,7 @@ void os_ls_recursive(char* path);
 int os_mkdir_recursive(char* path);
 
 int os_exists_path_before(char* path);
+
+void os_rm_recursive(char* path);
+
+int os_rmdir_recursive(char* path, bool recursive);

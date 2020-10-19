@@ -26,7 +26,15 @@ int main(int argc, char** argv)
   os_ls("/folder");
   //os_bitmap(1, true);
   printf("Mkdir: %i\n", os_mkdir("/memes/g bfgdsf777"));
-  os_ls("/memes/j");
+  os_ls("/memes");
+  os_ls("/folder");
+  os_rm("/folder/napkin.txt");
+  os_ls("/folder");
+  os_rmdir("/folder/61fdshjnfke", false);
+  os_ls("/folder");
+  os_rmdir("/folder", true);
+  os_ls("/folder");
+  os_ls("/");
   //os_bitmap(1, true);
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
   //os_bitmap(1, true);
