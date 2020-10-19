@@ -1034,5 +1034,22 @@ int os_mkdir_recursive(char* path){
 }
 
 int os_exists_path_before(char* path){
-  return 1;
+  char* new_pointer;
+  new_pointer = calloc(1024, sizeof(char));
+  const char slash = '/';
+  int n = 0;
+  int h = 0;
+  while (path[n] != NULL)
+  {
+    if (path[n] == slash){
+      h=n;
+    }
+    n++;
+  }
+  for (int i = 0; i < h; i++){
+    new_pointer[i] = path[i];
+  }
+  int result = os_exists(new_pointer);
+  free(new_pointer);
+  return result;
 }

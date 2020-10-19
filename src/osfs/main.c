@@ -25,8 +25,8 @@ int main(int argc, char** argv)
   os_ls("/folder");
   os_ls("/folder");
   //os_bitmap(1, true);
-  printf("Mkdir: %i\n", os_mkdir("/memes/gfdsaf bgfyuiwrbgfcwyi bcvfwy  bfcgwyrfcwbvuy  fbu"));
-  os_ls("/memes");
+  printf("Mkdir: %i\n", os_mkdir("/memes/g bfgdsf777"));
+  os_ls("/memes/j");
   //os_bitmap(1, true);
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
   //os_bitmap(1, true);
