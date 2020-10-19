@@ -11,7 +11,7 @@ int main(int argc, char** argv)
   unsigned char hola[4];
   hola[0] = "c";
   //os_write(os_open("/folder/nap", 'w'), hola, 128);
-  os_open("/folder/napkin.txt", 'w');
+  //os_close(os_open("/folder/barry.txt", 'w'));
   //printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloalo"));
   //os_open("/IMPORTANT.txt", 'r');//
@@ -47,6 +47,6 @@ int main(int argc, char** argv)
   os_rm("/memes/generic (3).png");
   os_ls("/");
   os_ls("/memes");
-  fclose(file);
+  os_desmontar();
   return 0;
 }
