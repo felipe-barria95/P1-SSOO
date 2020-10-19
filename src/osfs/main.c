@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include "os_API.h"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   os_mount(argv[1]);
   os_ls("/");
@@ -14,7 +14,7 @@ int main(int argc, char** argv)
   //os_close(os_open("/folder/barry.txt", 'w'));
   //printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloalo"));
-  os_read(os_open("/IMPORTANT.txt", 'r'), hola, 2048);//
+  os_read(os_open("/IMPORTANT.txt", 'r'), hola, 2048); //
   printf("BUFFER: %s\n", hola);
   //os_mount("./simdiskfilled.bin");//
   //os_ls("/");
