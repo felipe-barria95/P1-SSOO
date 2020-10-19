@@ -1019,7 +1019,6 @@ int os_mkdir_recursive(char* path){
         position = ftell(file) - 32;
         int asigned_block = update_bitmap();
         int_to_bytes(index_2, asigned_block);
-        printf("%X %X %X\n", index_2[0], index_2[1], index_2[2]);
         //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
         fseek(file, position, SEEK_SET);
         fwrite(index_2, 3, 1, file);
@@ -1029,6 +1028,7 @@ int os_mkdir_recursive(char* path){
       }
     }
     printf("La carpeta esta llena.\n");
+    fseek(file, 0, SEEK_SET);
     return 0;
   }
 }

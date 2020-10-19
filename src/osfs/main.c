@@ -18,13 +18,15 @@ int main(int argc, char** argv)
   //os_mount("./simdiskfilled.bin");//
   os_ls("/memes/generic (3).png");
   os_ls("/memes");
-  os_bitmap(0, true);
+  os_bitmap(1, true);
   //printf("EXISTE?: %i\n", os_exists("/esto no fue mi idea.rar"));
   //printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
   //os_bitmap(1, true);
-  //printf("Mkdir: %i\n", os_mkdir("/folder/alohuhu"));
+  os_ls("/folder");
+  os_ls("/folder");
   //os_bitmap(1, true);
-  //printf("Mkdir: %i\n", os_mkdir("/folder/aloh432uhu"));
+  printf("Mkdir: %i\n", os_mkdir("/memes/gfdsaf bgfyuiwrbgfcwyi bcvfwy  bfcgwyrfcwbvuy  fbu"));
+  os_ls("/memes");
   //os_bitmap(1, true);
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
   //os_bitmap(1, true);
