@@ -68,7 +68,7 @@ int update_bitmap();
 
 void int_to_bytes(unsigned char index[3], int block_number);
 
-void os_desmontar();
+void os_unmount();
 
 unsigned char* get_folder_path(char* path, unsigned char new_path[29]);
 
@@ -83,3 +83,5 @@ unsigned char obtain_new_buffer(unsigned char byte, int pos_zero);
 void rm_recursive();
 
 void rm_file_mem_dir(int mem_dir);
+
+void os_ls_recursive(char* path);

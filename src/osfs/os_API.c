@@ -28,7 +28,7 @@ void os_bitmap(unsigned num, bool hex)
         for (int i = 0; i < 2048; i++)
         {
           count += bits_in_char(buffer[i]);
-          printf("%02X ", buffer[i]);
+          fprintf(stderr, "%02X ", buffer[i]);
         }
       }
       else
@@ -54,7 +54,7 @@ void os_bitmap(unsigned num, bool hex)
     {
       for (int i = 0; i < 2048; i++)
       {
-        printf("%02X ", buffer[i]);
+        fprintf(stderr, "%02X ", buffer[i]);
       }
     }
     else
@@ -68,13 +68,15 @@ void os_bitmap(unsigned num, bool hex)
     printf("\n");
     fseek(file, 0, SEEK_SET);
   }
+  else{
+    printf("Ingrese un número de bitmap válido [1, 64].");
+  }
   free(buffer);
 }
 
 int os_exists(char* path)
 {
   int posicion = ftell(file);
-  printf("##  ##### %i\n", posicion);
   const char slash = '/';
   unsigned char name[29];
   unsigned char index[3];
@@ -119,42 +121,13 @@ int os_exists(char* path)
 
 void os_ls(char* path)
 {
-  unsigned char index[3];
-  unsigned char name[29];
-  for (int i = 0; i < 64; i++)
-  {
-    fread(index, 3, 1, file);
-    fread(name, 29, 1, file);
-    if (is_valid(index) > 0)
-    { //si llegamos al directorio destino o si estamos en directorio raiz//
-      //if (path[0] == NULL || path[0] == "/")
-      int n = 0;
-      while (path[n] != NULL)
-      {
-        n++;
-      }
-      if (path[0] == NULL || (path[0] == '/' && n == 1))
-      {
-        printf("%s\n", name); //falta comparar directorio inicial//
-      }
-      else
-      {
-        unsigned char new_path[29];
-        strip_path(path, new_path, 2);
-        int match = strcmp(new_path, name); //si es 0, hay match//
-        //FALTA LAST//
-        if (match == 0)
-        {
-          path = path + strip_new_path(new_path) + 1;
-          int disk_number = 2048 * block_number(index);
-          fseek(file, disk_number, SEEK_SET);
-          return os_ls(path);
-        }
-      }
-    }
+  if (os_exists(path) == 0){
+    printf("Esta direccion no existe.\n");
+    printf("==================================\n");
   }
-  printf("==================================\n");
-  fseek(file, 0, SEEK_SET);
+  else{
+    os_ls_recursive(path);
+  }
 }
 
 int ret_pos(char* path)
@@ -523,12 +496,9 @@ void os_rm(char* path)
       }
       else if (strchr(path, slash) == NULL)
       {
-        printf("Path1 rm: %s\n", name);
-        printf("Path2 rm: %s\n", path);
         int match = strcmp(path, name);
         if (match == 0)
         {
-          printf("path: %s\n", path);
           unsigned long position;
           fflush(file);
           position = ftell(file) - 32;
@@ -558,25 +528,21 @@ int os_mkdir(char* path)
   unsigned char new_path[29];
   path = path + 1;
   strip_path(path, new_path, 1);
-  printf("Path 1: %s\n", path);
   if (strchr(path, slash) != NULL)
   { //si no llegamos ¡al directorio destino o si estamos en directorio raiz//
     for (int i = 0; i < 64; i++)
     {
       unsigned char index[3];
       unsigned char name[29];
-      printf("new path: %s\n", new_path);
       fread(index, 3, 1, file);
       fread(name, 29, 1, file);
       if (is_valid(index) > 0)
       {
-        printf("name: %s\n", name);
         int match = strcmp(new_path, name);
         if (match == 0)
         {
           path = path + strip_new_path(new_path);
           int disk_number = 2048 * block_number(index);
-          printf("Disk numerb: %i\n", disk_number);
           fseek(file, disk_number, SEEK_SET);
           return os_mkdir(path);
         }
@@ -593,19 +559,15 @@ int os_mkdir(char* path)
       fread(name_2, 29, 1, file);
       if (is_valid(index_2) == 0)
       {
-        printf("llego aca\n");
         unsigned long position;
         fflush(file);
         position = ftell(file) - 32;
-        printf("Disk numer: %i\n", position);
         int asigned_block = update_bitmap();
-        printf("Block asginated: %i\n", asigned_block);
         int_to_bytes(index_2, asigned_block);
         printf("%X %X %X\n", index_2[0], index_2[1], index_2[2]);
         //obtenemos el valor de index que deberia tener y lo guardamos en index_2. Asignamos tambien el bloque de direccion y actualizamos el bitmap// FALTA
         fseek(file, position, SEEK_SET);
         fwrite(index_2, 3, 1, file);
-        printf("new new newpath: %s\n", new_path);
         fwrite(new_path, 29, 1, file);
         fseek(file, 0, SEEK_SET);
         return 1;
@@ -651,7 +613,6 @@ int os_rmdir(char* path, bool recursive)
           unsigned long position_2;
           fflush(file);
           position_2 = ftell(file);
-          printf("nombre jfda: %s\n", name);
           if (recursive == true) {
             int disk_number_2 = 2048 * block_number(index);
             rm_recursive(disk_number_2);
@@ -662,12 +623,10 @@ int os_rmdir(char* path, bool recursive)
           unsigned char zero[0];
           zero[0] = NULL;
           int disk_number = 2048 * block_number(index);
-          printf("Block number rmrem: %i\n", block_number(index));
           unsigned long position;
           fflush(file);
           position = ftell(file) - 32;
           update_remove_bitmap(block_number(index));
-          printf("positibon: %i\n", position);
           fseek(file, disk_number, SEEK_SET);
           for (int j = 0; j < 64; j++) {
             fread(index_2, 3, 1, file);
@@ -733,23 +692,18 @@ unsigned char* get_folder_path(char* path, unsigned char new_path[29])
     }
     n++;
   }
-  printf("## cantidad de slashs: %i\n", cantidad);
 
   // ahora dejamos el path no n-1 slash
   const char slash = '/';
   int j = 0;
   int h = 1;
-  printf("## path: %s\n", path);
   for (int k = 0; k < 29; k++)
   {
     if (j < cantidad)
     {
-      printf("## caracter del path: %c\n", path[k]);
       if (path[k] == slash)
       {
-        printf("## J: %i\n", j);
         j++;
-        printf("un slaaaaash\n");
       }
       else
       {
@@ -764,7 +718,6 @@ unsigned char* get_folder_path(char* path, unsigned char new_path[29])
       h++;
     }
   }
-  printf("## nuevo path: %s\n", new_path);
   return new_path;
 }
 
@@ -814,7 +767,7 @@ void print_bits(unsigned char val)
 {
   for (int i = 7; i >= 0; i--)
   {
-    printf("%c", (val & (1 << i)) ? '1' : '0');
+    fprintf(stderr, "%c ", (val & (1 << i)) ? '1' : '0');
   }
 }
 
@@ -922,16 +875,13 @@ void update_remove_bitmap(int index) {
   int resto = index % blocks_per_blocks;
   int resto_2 = resto % 8;
   resto = resto / 8;
-  printf("resultado :%i\n", resto_2);
   int disk_number_2 = (result + 1) * 2048 + resto;
-  printf("disk numerb 2: %i\n", disk_number_2);
   fseek(file, disk_number_2, SEEK_SET);
   fread(buffer, 1, 1, file);
   unsigned char new_buffer[0];
   new_buffer[0] = obtain_new_buffer(buffer[0], resto_2);
   fseek(file, disk_number_2, SEEK_SET);
   fwrite(new_buffer, 1, 1, file);
-  printf("Bufferfsafsfsa: %X\n", new_buffer[0]);
 }
 
 unsigned char obtain_new_buffer(unsigned char byte, int pos_zero) {
@@ -978,11 +928,7 @@ void rm_recursive(int mem_dir) {
   for (int i = 0; i < 64; i++) {
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
-    if (is_valid(index) > 0) {
-      printf("nombre dentro del : %s\n", name);
-    }
     if (is_valid(index) == 1) {
-      printf("Arcivho\n");
       rm_file_mem_dir(block_number(index));
       fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
       unsigned char zero[0];
@@ -991,7 +937,6 @@ void rm_recursive(int mem_dir) {
       fseek(file, mem_dir + 32 * i, SEEK_SET);
     }
     else if (is_valid(index) == 2) {
-      printf("Carpeta\n");
       int disk_number_3 = 2048 * block_number(index);
       rm_recursive(disk_number_3);
       fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
@@ -1021,7 +966,51 @@ void rm_file_mem_dir(int mem_dir) {
   free(pointers_ref);
 }
 
-void os_desmontar()
+void os_unmount()
 {
   fclose(file);
+}
+
+void os_ls_recursive(char* path){
+  unsigned char index[3];
+  unsigned char name[29];
+  for (int i = 0; i < 64; i++)
+  {
+    fread(index, 3, 1, file);
+    fread(name, 29, 1, file);
+    if (is_valid(index) > 0)
+    { //si llegamos al directorio destino o si estamos en directorio raiz//
+      //if (path[0] == NULL || path[0] == "/")
+      int n = 0;
+      while (path[n] != NULL)
+      {
+        n++;
+      }
+      if (path[0] == NULL || (path[0] == '/' && n == 1))
+      {
+        printf("%s\n", name); //falta comparar directorio inicial//
+      }
+      else
+      {
+        unsigned char new_path[29];
+        strip_path(path, new_path, 2);
+        int match = strcmp(new_path, name); //si es 0, hay match//
+        //FALTA LAST//
+        if (match == 0)
+        {
+          if (is_valid(index) == 2){
+            path = path + strip_new_path(new_path) + 1;
+            int disk_number = 2048 * block_number(index);
+            fseek(file, disk_number, SEEK_SET);
+            return os_ls_recursive(path);
+          }
+          else{
+            printf("El path mencionado va hacia un archivo.\n");
+          }
+        }
+      }
+    }
+  }
+  printf("==================================\n");
+  fseek(file, 0, SEEK_SET);
 }
