@@ -429,6 +429,7 @@ void os_rm(char* path)
           unsigned long position;
           fflush(file);
           position = ftell(file) - 32;
+          rm_file_mem_dir(block_number(index));
           fseek(file, position, SEEK_SET);
           unsigned char zero[0];
           zero[0] = NULL;
@@ -878,7 +879,6 @@ void rm_recursive(int mem_dir) {
     if (is_valid(index) == 1) {
       printf("Arcivho\n");
       rm_file_mem_dir(block_number(index));
-      update_remove_bitmap(mem_dir / 2048);
       fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
       unsigned char zero[0];
       zero[0] = NULL;
@@ -909,6 +909,9 @@ void rm_file_mem_dir(int mem_dir){
   fread(file_size, 7, 1, file);
   fread(pointers_ref, 2036, 1, file);
   fread(index_block, 4, 1, file);
+  if (hardlinks == 0){
+    update_remove_bitmap(mem_dir / 2048);
+    //borrar todo los bloques dentro del archivo
+  }
   free(pointers_ref);
-
 }

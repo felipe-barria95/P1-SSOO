@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   os_ls("/memes");
   os_rm("/memes/generic (1).jpg");
   os_ls("/memes");
+  os_rm("/memes/generic (3).png");
   os_ls("/");
   os_ls("/memes");
   fclose(file);
