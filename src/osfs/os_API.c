@@ -5,14 +5,14 @@
 #include <stdlib.h>
 #include <math.h>
 
-void os_mount(char *diskname)
+void os_mount(char* diskname)
 {
   file = fopen(diskname, "rb+");
 }
 
 void os_bitmap(unsigned num, bool hex)
 { //FALTA imprimir en stderr//
-  unsigned char *buffer;
+  unsigned char* buffer;
   buffer = calloc(2048, sizeof(char));
   if (num == 0)
   {
@@ -71,7 +71,7 @@ void os_bitmap(unsigned num, bool hex)
   free(buffer);
 }
 
-int os_exists(char *path)
+int os_exists(char* path)
 {
   int posicion = ftell(file);
   printf("##  ##### %i\n", posicion);
@@ -117,7 +117,7 @@ int os_exists(char *path)
   return 0;
 }
 
-void os_ls(char *path)
+void os_ls(char* path)
 {
   int pos_indice;
   unsigned char index[3];
@@ -161,7 +161,7 @@ void os_ls(char *path)
   fseek(file, 0, SEEK_SET);
 }
 
-int ret_pos(char *path)
+int ret_pos(char* path)
 {
   const char slash = '/';
   int pos;
@@ -212,7 +212,7 @@ int ret_pos(char *path)
   return 0;
 }
 
-osFile *os_open(char *path, char mode)
+osFile* os_open(char* path, char mode)
 {
   // RETORNAUN PUNTERO DEL ARCHIVO O NULL SI ES QUE HUBO UN ERROR
   // definimos la variable
@@ -400,13 +400,9 @@ int **get_and_fill_empt_block(int cantidad)
 }
 */
 
-int os_read(osFile *file_desc, void *buffer, int nbytes)
-{
-  //int bloques = ceil(nbytes / (float)2048);
-  if (file_desc->mode == 'r')
-  {
-    if (file_desc->read_buffer == file_desc->size)
-    {
+int os_read(osFile* file_desc, void* buffer, int nbytes) {
+  if (file_desc->mode == 'r') {
+    if (file_desc->read_buffer == file_desc->size) {
       fprintf(stderr, "Error: No bytes will be read");
       return 0;
     }
@@ -421,39 +417,26 @@ int os_read(osFile *file_desc, void *buffer, int nbytes)
     int aux_DATA;
     unsigned char next_BDS[4];
     unsigned char next_DATA[4];
-    //fread(buffer, read, 1, file);
-    /* READ = 200
-       RESTO = 100 */
     long int sum_bds = 0;
     int contador = 0;
     long int sum_index = 0;
-    char *src = malloc(read);
-    printf("## posición del bloque indice: %i\n", (file_desc->pos_indice));
-    while (pending_read > 0)
-    {                                                                           // 200 -> 100
-      fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
-      printf(" FTELL %i\n", ftell(file));
-      //printf("POS INDICE: %i\n", file_desc->pos_indice + 8 + sum_index);
+    char* src = malloc(file_desc->size);
+    int aux = 0;
+    while (pending_read > 0) {
+      fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET);
       fread(next_BDS, 4, 1, file);
-      printf("next_BDS: %i, %i, %i, %i\n", next_BDS[0], next_BDS[1], next_BDS[2], next_BDS[3]);
-      aux_bds = ((next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3]);
-      printf("AUX BDS: %i\n", (int)aux_bds);
-      fseek(file, (long int)(aux_bds + sum_bds), SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
+      aux_bds = block_number_index(next_BDS);
+      fseek(file, (long int)((aux_bds * 2048) + sum_bds), SEEK_SET);
       fread(next_DATA, 4, 1, file);
-      aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
-      printf("next_DATA: %i, %i, %i, %i\n", next_DATA[0], next_DATA[1], next_DATA[2], next_DATA[3]);
-      //printf("AUX DATA: %i\n", aux_DATA);
-      printf("AUX_DATA %lu\n", (int)aux_DATA);
-      fseek(file, (long int)aux_DATA, SEEK_SET);
-      if (pending_read > file_desc->resto_bloque_data)
-      {                                            // 200 > 100? -> 100 > 100?
-        read_block = file_desc->resto_bloque_data; // 100
+      aux_DATA = block_number_index(next_DATA);
+      fseek(file, (long int)(aux_DATA * 2048), SEEK_SET);
+      if (pending_read > file_desc->resto_bloque_data) {
+        read_block = file_desc->resto_bloque_data;
       }
-      fread(src, read_block, 1, file); // SE LEEN 100
-      //printf("READ: %i\n", read);
-      //printf("READ BLOCK: %i\n", read_block);
-      //printf("SRC: %c\n", src[0]);
-      pending_read -= read_block; // 100
+      fread(src, read_block, 1, file);
+      memcpy(buffer + aux, src, read_block);
+      aux += read_block;
+      pending_read -= read_block;
       sum_bds += 4;
       contador++;
       if (contador == file_desc->resto_BDS)
@@ -462,20 +445,18 @@ int os_read(osFile *file_desc, void *buffer, int nbytes)
         sum_index += 4;
       }
     }
-    file_desc->read_buffer += read;
     src[read] = '\0';
-    memcpy(buffer, src, read);
+    file_desc->read_buffer += read;
     free(src);
     return read;
   }
-  else
-  {
-    fprintf(stderr, "Custom error: Incorrect mode");
-    return -1;
+  else {
+    fprintf(stderr, "Error: Incorrect mode");
+    return  -1;
   }
 };
 
-int os_write(osFile *file_desc, void *buffer, int nbytes)
+int os_write(osFile* file_desc, void* buffer, int nbytes)
 {
   //int bloques = ceil(nbytes / (float)2048);
   if (file_desc->mode == 'w')
@@ -498,7 +479,7 @@ int os_write(osFile *file_desc, void *buffer, int nbytes)
     long int sum_bds = 0;
     int contador = 0;
     long int sum_index = 0;
-    char *src = malloc(write);
+    char* src = malloc(write);
     while (pending_write > 0)
     {
       fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
@@ -608,12 +589,12 @@ int os_write(osFile *file_desc, void *buffer, int nbytes)
 //  return 0;
 //}
 
-void os_close(osFile *file_desc)
+void os_close(osFile* file_desc)
 {
   free(file_desc);
 }
 
-void os_rm(char *path)
+void os_rm(char* path)
 {
   const char slash = '/';
   unsigned char name[29];
@@ -662,11 +643,11 @@ void os_rm(char *path)
   }
 }
 
-int os_hardlink(char *orig, char *dest)
+int os_hardlink(char* orig, char* dest)
 {
 }
 
-int os_mkdir(char *path)
+int os_mkdir(char* path)
 {
   int count = 0;
   const char slash = '/';
@@ -729,7 +710,7 @@ int os_mkdir(char *path)
   }
 }
 
-int os_rmdir(char *path, bool recursive)
+int os_rmdir(char* path, bool recursive)
 {
   const char slash = '/';
   unsigned char name[29];
@@ -807,11 +788,11 @@ int os_rmdir(char *path, bool recursive)
   return 0;
 }
 
-void os_unload(char *orig, char *dest)
+void os_unload(char* orig, char* dest)
 {
 }
 
-void os_load(char *orig)
+void os_load(char* orig)
 {
 }
 
@@ -831,12 +812,12 @@ void print_ls()
   fseek(file, 0, SEEK_SET);
 }
 
-int is_valid(unsigned char *bits)
+int is_valid(unsigned char* bits)
 {
   return bits[0] >> 6;
 }
 
-unsigned char *get_folder_path(char *path, unsigned char new_path[29])
+unsigned char* get_folder_path(char* path, unsigned char new_path[29])
 {
   //unsigned char new_path[29];
   new_path[0] = '/';
@@ -886,13 +867,17 @@ unsigned char *get_folder_path(char *path, unsigned char new_path[29])
   return new_path;
 }
 
-int block_number(unsigned char *bits)
+int block_number(unsigned char* bits)
 {
   return ((bits[0] & 0x3F) << 16) | (bits[1] << 8) | bits[2];
 }
 
-void strip_path(char *path, unsigned char new_path[29], int i)
+int block_number_index(unsigned char* bits)
 {
+  return (bits[0] << 24) | (bits[1] << 16) | (bits[2] << 8) | bits[3];
+}
+
+void strip_path(char* path, unsigned char new_path[29], int i) {
 
   const char slash = '/';
   int h = 0;
@@ -950,7 +935,7 @@ int bits_in_char(unsigned char val)
 
 int update_bitmap()
 {
-  unsigned char *buffer;
+  unsigned char* buffer;
   buffer = calloc(2048, sizeof(char));
   int count = 0;
   for (int j = 1; j < 65; j++)
@@ -1134,7 +1119,7 @@ void rm_file_mem_dir(int mem_dir)
 {
   unsigned char hardlinks[0];
   unsigned char file_size[7];
-  unsigned char *pointers_ref;
+  unsigned char* pointers_ref;
   pointers_ref = calloc(2036, sizeof(char));
   unsigned char index_block[4];
   fread(hardlinks, 1, 1, file);
