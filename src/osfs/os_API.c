@@ -74,7 +74,6 @@ void os_bitmap(unsigned num, bool hex)
 int os_exists(char* path)
 {
   int posicion = ftell(file);
-  printf("##  ##### %i\n", posicion);
   const char slash = '/';
   unsigned char name[29];
   unsigned char index[3];
@@ -179,6 +178,7 @@ int ret_pos(char* path)
     index_anterior[3] = index[2];
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
+    printf("NAME: %s\n", name);
     if (is_valid(index) > 0)
     {
       if (strchr(path, slash) != NULL)
@@ -195,6 +195,7 @@ int ret_pos(char* path)
       }
       else if (strchr(path, slash) == NULL)
       {
+
         int match = strcmp(path, name);
         if (match == 0)
         {
@@ -205,6 +206,7 @@ int ret_pos(char* path)
       }
     }
   }
+  printf("aca\n");
   fseek(file, 0, SEEK_SET);
   return 0;
 }
@@ -262,10 +264,9 @@ osFile* os_open(char* path, char mode)
   {
     fseek(file, 0, SEEK_SET);
     unsigned char folder_path[29];
-    //printf("## logramos copiar el path?: %s\n", get_folder_path(path, folder_path));
-
+    get_folder_path(path, folder_path);
     //memcpy(new_path, get_folder_path(path), 29);
-    //printf("## logramos copiar el path?: %s\n", folder_path);
+    printf("## logramos copiar el path?: %s\n", folder_path);
     fseek(file, 0, SEEK_SET);
     if (os_exists(folder_path))
     {
@@ -283,6 +284,7 @@ osFile* os_open(char* path, char mode)
         //printf("## posicon vacia: %i\n", posicion_vacia3);
 
         int pos_folder;
+        fseek(file, 0, SEEK_SET);
         pos_folder = ret_pos(folder_path);
         fseek(file, pos_folder, SEEK_SET);
         unsigned char name[29];
@@ -297,54 +299,51 @@ osFile* os_open(char* path, char mode)
             unsigned char index_1[3];
             int uno = 1;
             index_1[0] = uno << 6;
-            index_1[1] = posicion_vacia1 >> 8;
-            index_1[3] = posicion_vacia1;
+            index_1[1] = (posicion_vacia1 / 2048) >> 8;
+            index_1[3] = posicion_vacia1 / 2048;
             //printf("## es vacio?: %i\n", is_valid(index_1));
             fwrite(index_1, 3, 1, file);
             unsigned char name[29];
-            name[0] = "notfile.txt";
-            name[1] = 'n';
-            name[2] = 'o';
-            name[3] = 't';
-            name[4] = 'f';
-            name[5] = 'i';
-            name[6] = 'l';
-            name[7] = 'e';
-            name[8] = '.';
-            name[9] = 't';
-            name[10] = 'x';
-            name[11] = 't';
-            fwrite(name, 29, 1, file);
-            printf("## posicion del indice: %i\n", posicion_vacia1);
-            fseek(file, posicion_vacia1, SEEK_SET);
-            // ahora en el bloque indice
-            unsigned char hardlinks[1];
-            hardlinks[0] = 1;
-            fwrite(hardlinks, 1, 1, file);
-            unsigned char size[7];
-            size[0] = 0;
-            size[1] = 0;
-            size[2] = 0;
-            size[3] = 0;
-            size[4] = 0;
-            size[5] = 0;
-            size[6] = 0;
-            fwrite(size, 7, 1, file);
-            unsigned char puntero_BDS[4];
-            puntero_BDS[0] = posicion_vacia2 >> 24;
-            puntero_BDS[1] = posicion_vacia2 >> 16;
-            puntero_BDS[2] = posicion_vacia2 >> 8;
-            puntero_BDS[3] = posicion_vacia2;
-            fwrite(puntero_BDS, 4, 1, file);
-            fseek(file, posicion_vacia2, SEEK_SET); // nos movemos al bloque indice
-            // un vez en el bloque induce
-            unsigned char puntero_DATA[4];
-            puntero_DATA[0] = posicion_vacia3 >> 24;
-            puntero_DATA[1] = posicion_vacia3 >> 16;
-            puntero_DATA[2] = posicion_vacia3 >> 8;
-            puntero_DATA[3] = posicion_vacia3;
-            fwrite(puntero_DATA, 4, 1, file);
-            fseek(file, posicion_vacia3, SEEK_SET); // nos movemos al bloque DATA
+            //int tam = 0;
+            //for (int i = 0; i < 29; i++) {
+            //  name[i] = path[tam + i];
+            //}
+            //printf("PATH: %i\n", tam);
+            //for (int i = 0; i < 29; i++) {
+            //  name[i] = path[tam + i];
+            //}
+            //printf("PATH: %s\n", name);
+            //fwrite(name, 29, 1, file);
+            //printf("## posicion del indice: %i\n", posicion_vacia1);
+            //fseek(file, posicion_vacia1, SEEK_SET);
+            //// ahora en el bloque indice
+            //unsigned char hardlinks[1];
+            //hardlinks[0] = 1;
+            //fwrite(hardlinks, 1, 1, file);
+            //unsigned char size[7];
+            //size[0] = 0;
+            //size[1] = 0;
+            //size[2] = 0;
+            //size[3] = 0;
+            //size[4] = 0;
+            //size[5] = 0;
+            //size[6] = 0;
+            //fwrite(size, 7, 1, file);
+            //unsigned char puntero_BDS[4];
+            //puntero_BDS[0] = posicion_vacia2 >> 24;
+            //puntero_BDS[1] = posicion_vacia2 >> 16;
+            //puntero_BDS[2] = posicion_vacia2 >> 8;
+            //puntero_BDS[3] = posicion_vacia2;
+            //fwrite(puntero_BDS, 4, 1, file);
+            //fseek(file, posicion_vacia2, SEEK_SET); // nos movemos al bloque indice
+            //// un vez en el bloque induce
+            //unsigned char puntero_DATA[4];
+            //puntero_DATA[0] = posicion_vacia3 >> 24;
+            //puntero_DATA[1] = posicion_vacia3 >> 16;
+            //puntero_DATA[2] = posicion_vacia3 >> 8;
+            //puntero_DATA[3] = posicion_vacia3;
+            //fwrite(puntero_DATA, 4, 1, file);
+            //fseek(file, posicion_vacia3, SEEK_SET); // nos movemos al bloque DATA
             return OsFile;
           }
         }
@@ -432,7 +431,7 @@ int os_read(osFile* file_desc, void* buffer, int nbytes) {
       }
       fread(src, read_block, 1, file);
       memcpy(buffer + aux, src, read_block);
-      aux += read_block - 1;
+      aux += read_block;
       pending_read -= read_block;
       sum_bds += 4;
       contador++;
@@ -475,13 +474,13 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
     char* src = malloc(file_desc->size);
     int aux = 0;
     while (pending_write > 0) {
-      fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET);
-      fread(next_BDS, 4, 1, file);
-      aux_bds = block_number_index(next_BDS);
-      fseek(file, (long int)((aux_bds * 2048) + sum_bds), SEEK_SET);
-      fread(next_DATA, 4, 1, file);
-      aux_DATA = block_number_index(next_DATA);
-      fseek(file, (long int)(aux_DATA * 2048), SEEK_SET);
+      //fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index ), SEEK_SET);
+      //fread(next_BDS, 4, 1, file);
+      //aux_bds = block_number_index(next_BDS);
+      //fseek(file, (long int)((aux_bds * 2048) + sum_bds), SEEK_SET);
+      //fread(next_DATA, 4, 1, file);
+      //aux_DATA = block_number_index(next_DATA);
+      fseek(file, (long int)(file_desc->ultima_posicion), SEEK_SET);
       if (pending_write > file_desc->resto_bloque_data) {
         write_block = file_desc->resto_bloque_data;
       }
