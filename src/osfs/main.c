@@ -9,6 +9,9 @@ int main(int argc, char** argv)
   ///os_bitmap(1, true);
   //printf("EXISTE?: %i\n", os_exists("/folder/napkin.txt"));
   unsigned char hola[56000];
+
+  printf("EXISTE?: %i\n", os_exists("/esto no fue mi idea.rar"));
+  //unsigned char hola[4];
   //hola[0] = "c";
   //os_write(os_open("/folder/nap", 'w'), hola, 128);
   //os_close(os_open("/folder/barry.txt", 'w'));
@@ -25,6 +28,27 @@ int main(int argc, char** argv)
   //printf("Mkdir: %i\n", os_mkdir("/folder/alohuhu"));
   //os_bitmap(1, true);
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloh432uhu"));
+  os_ls("/memes/generic (3).png");
+  os_ls("/memes");
+  os_bitmap(1, true);
+  //printf("EXISTE?: %i\n", os_exists("/esto no fue mi idea.rar"));
+  //printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
+  //os_bitmap(1, true);
+  os_ls("/folder");
+  os_ls("/folder");
+  //os_bitmap(1, true);
+  printf("Mkdir: %i\n", os_mkdir("/memes/g bfgdsf777"));
+  os_ls("/memes");
+  os_ls("/folder");
+  os_rm("/folder/napkin.txt");
+  os_ls("/folder");
+  os_rmdir("/folder/61fdshjnfke", false);
+  os_ls("/folder");
+  os_rmdir("/folder", true);
+  os_ls("/folder");
+  os_ls("/");
+  printf("Mkdir: %i\n", os_mkdir("/memes/g bfgdsfgdsf777"));
+  os_bitmap(1, true);
   //os_bitmap(1, true);
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloh4532uhu"));
   //os_bitmap(1, true);
@@ -48,6 +72,6 @@ int main(int argc, char** argv)
   //os_rm("/memes/generic (3).png");
   //os_ls("/");
   //os_ls("/memes");
-  os_desmontar();
+  os_unmount();
   return 0;
 }
