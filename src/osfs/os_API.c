@@ -233,24 +233,24 @@ osFile* os_open(char* path, char mode)
     unsigned char size[7];
     fread(size, 7, 1, file); // leemos el size del archivo
     OsFile->size = (size[3] << 24) | (size[4] << 16) | (size[5] << 8) | size[6];
-    printf("## Tamaño: %i\n", OsFile->size);
+    //printf("## Tamaño: %i\n", OsFile->size);
     // calculamos la cantidad de punteros a bloques de direccionamineto
     double bloques = ceil(((double)OsFile->size) / 2048);
-    printf("## cantidad de bloques; %f\n", bloques);
+    //printf("## cantidad de bloques; %f\n", bloques);
     OsFile->resto_bloque_data = 2048 - (OsFile->size % 2048);
-    printf("## RESTO bloque data: %i\n", OsFile->resto_bloque_data);
+    //printf("## RESTO bloque data: %i\n", OsFile->resto_bloque_data);
     double direccionaminetos = ceil(bloques / 512);
     OsFile->resto_BDS = 512 - (((int)bloques) % 512);
-    printf("## RESTO BDS: %i\n", OsFile->resto_BDS);
+    //printf("## RESTO BDS: %i\n", OsFile->resto_BDS);
     OsFile->n_direccionaminetos = (int)direccionaminetos;
-    printf("## cantidad de blouqes de direccionamiento indirecto simple: %i\n", OsFile->n_direccionaminetos);
+    //printf("## cantidad de blouqes de direccionamiento indirecto simple: %i\n", OsFile->n_direccionaminetos);
     double resto = OsFile->n_direccionaminetos - 509;
     int adicionales = 0;
     if (resto > 0)
     {
       adicionales = ceil(resto / 511);
     }
-    printf("## bloques  que no caben en el indice principal: %f\n", resto);
+    //printf("## bloques  que no caben en el indice principal: %f\n", resto);
     OsFile->n_indices_adcicionales = resto;
 
     fseek(file, 0, SEEK_SET);
@@ -262,10 +262,10 @@ osFile* os_open(char* path, char mode)
   {
     fseek(file, 0, SEEK_SET);
     unsigned char folder_path[29];
-    printf("## logramos copiar el path?: %s\n", get_folder_path(path, folder_path));
+    //printf("## logramos copiar el path?: %s\n", get_folder_path(path, folder_path));
 
     //memcpy(new_path, get_folder_path(path), 29);
-    printf("## logramos copiar el path?: %s\n", folder_path);
+    //printf("## logramos copiar el path?: %s\n", folder_path);
     fseek(file, 0, SEEK_SET);
     if (os_exists(folder_path))
     {
@@ -276,11 +276,11 @@ osFile* os_open(char* path, char mode)
         int posicion_vacia2;
         int posicion_vacia3;
         posicion_vacia1 = update_bitmap() * 2048;
-        printf("## posicon vacia: %i\n", posicion_vacia1);
+        //printf("## posicon vacia: %i\n", posicion_vacia1);
         posicion_vacia2 = update_bitmap() * 2048;
-        printf("## posicon vacia: %i\n", posicion_vacia2);
+        //printf("## posicon vacia: %i\n", posicion_vacia2);
         posicion_vacia3 = update_bitmap() * 2048;
-        printf("## posicon vacia: %i\n", posicion_vacia3);
+        //printf("## posicon vacia: %i\n", posicion_vacia3);
 
         int pos_folder;
         pos_folder = ret_pos(folder_path);
@@ -352,7 +352,7 @@ osFile* os_open(char* path, char mode)
     }
     //fseek(file, 0, SEEK_SET);
     // tengo que seguir el path hasta la ubicación del archivo
-    printf("## completamos\n");
+    //printf("## completamos\n");
   }
 
   // Si no es ninguo de los dos o el achivo existo o no exite
@@ -432,7 +432,7 @@ int os_read(osFile* file_desc, void* buffer, int nbytes) {
       }
       fread(src, read_block, 1, file);
       memcpy(buffer + aux, src, read_block);
-      aux += read_block;
+      aux += read_block - 1;
       pending_read -= read_block;
       sum_bds += 4;
       contador++;
@@ -486,7 +486,7 @@ int os_write(osFile* file_desc, void* buffer, int nbytes) {
         write_block = file_desc->resto_bloque_data;
       }
       fread(src, write_block, 1, file);
-      memcpy(buffer + aux, src, write_block);
+      memcpy(src, buffer + aux, write_block);
       aux += write_block;
       pending_write -= write_block;
       sum_bds += 4;
