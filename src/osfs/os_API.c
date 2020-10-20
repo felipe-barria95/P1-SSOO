@@ -452,51 +452,42 @@ int os_read(osFile* file_desc, void* buffer, int nbytes) {
   }
 };
 
-int os_write(osFile* file_desc, void* buffer, int nbytes)
-{
-  //int bloques = ceil(nbytes / (float)2048);
-  if (file_desc->mode == 'w')
-  {
-    if (file_desc->write_buffer == file_desc->size)
-    {
+int os_write(osFile* file_desc, void* buffer, int nbytes) {
+  if (file_desc->mode == 'w') {
+    if (file_desc->read_buffer == file_desc->size) {
       fprintf(stderr, "Error: No bytes will be written");
       return 0;
     }
     int write = nbytes;
     if ((file_desc->write_buffer + nbytes) >= file_desc->size)
+    {
       write = file_desc->size - file_desc->write_buffer;
+    }
     int write_block = write;
     int pending_write = write;
     long int aux_bds;
     int aux_DATA;
     unsigned char next_BDS[4];
     unsigned char next_DATA[4];
-    //fread(buffer, write, 1, file);
     long int sum_bds = 0;
     int contador = 0;
     long int sum_index = 0;
-    char* src = malloc(write);
-    while (pending_write > 0)
-    {
-      fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET); // NOS PONE EN EL PRIMER PUNTERO A BDS
-      //printf("POS INDICE: %i\n", file_desc->pos_indice + 8 + sum_index);
+    char* src = malloc(file_desc->size);
+    int aux = 0;
+    while (pending_write > 0) {
+      fseek(file, (long int)(file_desc->pos_indice + 8 + sum_index), SEEK_SET);
       fread(next_BDS, 4, 1, file);
-      aux_bds = (next_BDS[0] << 24) | (next_BDS[1] << 16) | (next_BDS[2] << 8) | next_BDS[3];
-      //printf("AUX BDS: %i\n", aux_bds);
-      fseek(file, (long int)(aux_bds + sum_bds), SEEK_SET); //NOS PONE EN EL PRIMER PUNTERO AL BLOQUE DATA
+      aux_bds = block_number_index(next_BDS);
+      fseek(file, (long int)((aux_bds * 2048) + sum_bds), SEEK_SET);
       fread(next_DATA, 4, 1, file);
-      aux_DATA = (next_DATA[0] << 24) | (next_DATA[1] << 16) | (next_DATA[2] << 8) | next_DATA[3];
-      //printf("next_DATA: %s\n", next_DATA);
-      //printf("AUX DATA: %i\n", aux_DATA);
-      fseek(file, (long int)aux_DATA, SEEK_SET);
-      if (pending_write > file_desc->resto_bloque_data)
-      {
+      aux_DATA = block_number_index(next_DATA);
+      fseek(file, (long int)(aux_DATA * 2048), SEEK_SET);
+      if (pending_write > file_desc->resto_bloque_data) {
         write_block = file_desc->resto_bloque_data;
       }
       fread(src, write_block, 1, file);
-      //printf("READ: %i\n", write);
-      //printf("READ BLOCK: %i\n", write_block);
-      //printf("SRC: %c\n", src[0]);
+      memcpy(buffer + aux, src, write_block);
+      aux += write_block;
       pending_write -= write_block;
       sum_bds += 4;
       contador++;
@@ -507,15 +498,12 @@ int os_write(osFile* file_desc, void* buffer, int nbytes)
       }
     }
     file_desc->write_buffer += write;
-    src[write] = '\0';
-    memcpy(src, buffer, write);
     free(src);
     return write;
   }
-  else
-  {
-    fprintf(stderr, "Custom error: Incorrect mode");
-    return -1;
+  else {
+    fprintf(stderr, "Error: Incorrect mode");
+    return  -1;
   }
 };
 
@@ -743,7 +731,6 @@ int os_rmdir(char* path, bool recursive)
           unsigned long position_2;
           fflush(file);
           position_2 = ftell(file);
-          printf("nombre jfda: %s\n", name);
           if (recursive == true)
           {
             int disk_number_2 = 2048 * block_number(index);
@@ -755,12 +742,11 @@ int os_rmdir(char* path, bool recursive)
           unsigned char zero[0];
           zero[0] = NULL;
           int disk_number = 2048 * block_number(index);
-          printf("Block number rmrem: %i\n", block_number(index));
+          //printf("Block number rmrem: %i\n", block_number(index));
           unsigned long position;
           fflush(file);
           position = ftell(file) - 32;
           update_remove_bitmap(block_number(index));
-          printf("positibon: %i\n", position);
           fseek(file, disk_number, SEEK_SET);
           for (int j = 0; j < 64; j++)
           {
@@ -828,23 +814,23 @@ unsigned char* get_folder_path(char* path, unsigned char new_path[29])
     }
     n++;
   }
-  printf("## cantidad de slashs: %i\n", cantidad);
+  //printf("## cantidad de slashs: %i\n", cantidad);
 
   // ahora dejamos el path no n-1 slash
   const char slash = '/';
   int j = 0;
   int h = 1;
-  printf("## path: %s\n", path);
+  //printf("## path: %s\n", path);
   for (int k = 0; k < 29; k++)
   {
     if (j < cantidad)
     {
-      printf("## caracter del path: %c\n", path[k]);
+      //printf("## caracter del path: %c\n", path[k]);
       if (path[k] == slash)
       {
-        printf("## J: %i\n", j);
+        //printf("## J: %i\n", j);
         j++;
-        printf("un slaaaaash\n");
+        //printf("un slaaaaash\n");
       }
       else
       {
@@ -859,7 +845,7 @@ unsigned char* get_folder_path(char* path, unsigned char new_path[29])
       h++;
     }
   }
-  printf("## nuevo path: %s\n", new_path);
+  //printf("## nuevo path: %s\n", new_path);
   return new_path;
 }
 
@@ -1084,11 +1070,11 @@ void rm_recursive(int mem_dir)
     fread(name, 29, 1, file);
     if (is_valid(index) > 0)
     {
-      printf("nombre dentro del : %s\n", name);
+      //printf("nombre dentro del : %s\n", name);
     }
     if (is_valid(index) == 1)
     {
-      printf("Arcivho\n");
+      //printf("Arcivho\n");
       rm_file_mem_dir(block_number(index));
       fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
       unsigned char zero[0];
@@ -1098,7 +1084,7 @@ void rm_recursive(int mem_dir)
     }
     else if (is_valid(index) == 2)
     {
-      printf("Carpeta\n");
+      //printf("Carpeta\n");
       int disk_number_3 = 2048 * block_number(index);
       rm_recursive(disk_number_3);
       fseek(file, mem_dir + 32 * (i - 1), SEEK_SET);
