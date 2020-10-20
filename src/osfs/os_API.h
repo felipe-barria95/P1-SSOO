@@ -94,3 +94,5 @@ int os_exists_path_before(char* path);
 void os_rm_recursive(char* path);
 
 int os_rmdir_recursive(char* path, bool recursive);
+
+int block_number_index(unsigned char* bits);

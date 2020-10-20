@@ -17,7 +17,7 @@ int main(int argc, char** argv)
   //os_close(os_open("/folder/barry.txt", 'w'));
   //printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloalo"));
-  printf("%i\n", os_read(os_open("/IMPORTANT.txt", 'r'), hola, 56000));//
+  //printf("%i\n", os_read(os_open("/IMPORTANT.txt", 'r'), hola, 56000));//
   //printf("%s\n", hola);
   //os_mount("./simdiskfilled.bin");//
   //os_ls("/");
