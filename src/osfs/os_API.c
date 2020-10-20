@@ -119,13 +119,10 @@ int os_exists(char* path)
 
 void os_ls(char* path)
 {
-  int pos_indice;
   unsigned char index[3];
   unsigned char name[29];
   for (int i = 0; i < 64; i++)
   {
-    pos_indice = ftell(file);
-    printf("POSICION QL: %i\n", pos_indice);
     fread(index, 3, 1, file);
     fread(name, 29, 1, file);
 
@@ -445,7 +442,6 @@ int os_read(osFile* file_desc, void* buffer, int nbytes) {
         sum_index += 4;
       }
     }
-    src[read] = '\0';
     file_desc->read_buffer += read;
     free(src);
     return read;
@@ -1136,5 +1132,6 @@ void rm_file_mem_dir(int mem_dir)
 
 void os_desmontar()
 {
+  free(OsFile);
   fclose(file);
 }

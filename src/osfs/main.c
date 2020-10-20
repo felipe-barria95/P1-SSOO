@@ -8,13 +8,13 @@ int main(int argc, char** argv)
   os_ls("/");
   ///os_bitmap(1, true);
   //printf("EXISTE?: %i\n", os_exists("/folder/napkin.txt"));
-  unsigned char hola[55360];
+  unsigned char hola[55361];
   //hola[0] = "c";
   //os_write(os_open("/folder/nap", 'w'), hola, 128);
   //os_close(os_open("/folder/barry.txt", 'w'));
   //printf("EXISTE?: %i\n", os_exists("/music/UN Owen Was Her.mp3"));
   //printf("Mkdir: %i\n", os_mkdir("/folder/aloalo"));
-  printf("%i\n", os_read(os_open("/IMPORTANT.txt", 'r'), hola, 55360));//
+  printf("%i\n", os_read(os_open("/IMPORTANT.txt", 'r'), hola, 55361));//
   //printf("%s\n", hola);
   //os_mount("./simdiskfilled.bin");//
   //os_ls("/");
